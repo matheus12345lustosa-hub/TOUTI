@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* TOUTI CHIC THEME (Light/Rose/Elegant) */
+    --background: 0 0% 100%; /* #ffffff */
+    --foreground: 335 20% 20%; /* Dark Rose-Gray */
+
+    --card: 0 0% 100%;
+    --card-foreground: 335 20% 20%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 335 20% 20%;
+ 
+    --primary: 335 70% 50%; /* #d92662 (Elegant Rose) */
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 335 30% 96%; /* #fff1f5 (Very Light Rose) */
+    --secondary-foreground: 335 70% 30%;
+ 
+    --muted: 335 20% 96%;
+    --muted-foreground: 335 10% 50%;
+ 
+    --accent: 335 30% 96%;
+    --accent-foreground: 335 70% 30%;
+ 
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 335 20% 90%; /* Soft Rose Border */
+    --input: 335 20% 90%;
+    --ring: 335 70% 50%;
+ 
+    --radius: 0.75rem; /* Slightly more rounded for elegance */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

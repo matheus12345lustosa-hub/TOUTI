@@ -1,0 +1,304 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// MÓDULO: IDENTIDADE & ACESSO
+// ==========================================
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  
+  users     User[]
+  productStocks ProductStock[]
+  sales     Sale[]
+  cashRegisters CashRegister[]
+  expenses  Expense[]
+  bills     Bill[]
+  stockMovements StockMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed
+  role      String   @default("FUNCIONARIO") // GERENTE, FUNCIONARIO
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  branchId  String?
+
+  sales     Sale[]
+  cashRegisters CashRegister[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  barcode     String   @unique // EAN-13
+  internalCode String? @unique
+  price       Decimal
+  costPrice   Decimal  @default(0)
+  // stock       Int      @default(0)  <- MOVED TO ProductStock
+  // minStock    Int      @default(5)  <- MOVED TO ProductStock
+  imageUrl    String?
+  ncm         String?
+  cest        String?
+  cfop        String?
+  unit        String   @default("UN")
+  
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  supplierId  String?
+
+  salesCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  saleItems   SaleItem[]
+  stockMovements StockMovement[]
+  promotions  Promotion[]
+  productStocks ProductStock[]
+}
+
+model ProductStock {
+  id        String   @id @default(cuid())
+  quantity  Int      @default(0)
+  minStock  Int      @default(5)
+
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  branchId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, branchId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  products  Product[]
+}
+
+model Supplier {
+  id        String    @id @default(cuid())
+  name      String
+  cnpj      String?   @unique
+  phone     String?
+  email     String?
+  
+  products  Product[]
+  
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Promotion {
+  id               String   @id @default(cuid())
+  name             String
+  type             String   // BUNDLE, PROGRESSIVE, WHOLESALE
+  minQuantity      Int
+  promotionalPrice Decimal?
+  discountPercent  Decimal? // For progressive discount
+  payQuantity      Int?
+  
+  validFrom        DateTime?
+  validUntil       DateTime?
+  active           Boolean  @default(true)
+
+  product          Product  @relation(fields: [productId], references: [id])
+  productId        String
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model StockMovement {
+  id        String   @id @default(cuid())
+  type      String   // ENTRADA, SAIDA, AJUSTE
+  quantity  Int
+  reason    String?
+  
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+
+  branch    Branch? @relation(fields: [branchId], references: [id])
+  branchId  String?
+
+  createdAt DateTime @default(now())
+}
+
+model CashRegister {
+  id            String    @id @default(cuid())
+  openedAt      DateTime  @default(now())
+  closedAt      DateTime?
+  initialAmount Decimal
+  finalAmount   Decimal?
+  status        String    @default("OPEN")
+  
+  operator      User      @relation(fields: [operatorId], references: [id])
+  operatorId    String
+
+  branch        Branch?   @relation(fields: [branchId], references: [id])
+  branchId      String?
+
+  transactions  CashTransaction[]
+  sales         Sale[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model CashTransaction {
+  id              String          @id @default(cuid())
+  type            String          // SANGRIA, SUPRIMENTO
+  amount          Decimal
+  description     String?
+  
+  cashRegister    CashRegister    @relation(fields: [cashRegisterId], references: [id])
+  cashRegisterId  String
+
+  createdAt       DateTime        @default(now())
+}
+
+model Sale {
+  id              String        @id @default(cuid())
+  total           Decimal
+  status          String        @default("COMPLETED")
+  paymentMethod   String?
+  
+  user            User          @relation(fields: [userId], references: [id])
+  userId          String
+
+  client          Client?       @relation(fields: [clientId], references: [id])
+  clientId        String?
+
+  cashRegister    CashRegister? @relation(fields: [cashRegisterId], references: [id])
+  cashRegisterId  String?
+
+  branch          Branch?       @relation(fields: [branchId], references: [id])
+  branchId        String?
+
+  items           SaleItem[]
+  payments        SalePayment[]
+
+  createdAt       DateTime      @default(now())
+}
+
+model SalePayment {
+  id        String   @id @default(cuid())
+  method    String   // DINHEIRO, CARTAO_CREDITO, CARTAO_DEBITO, PIX
+  amount    Decimal
+  
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  saleId    String
+}
+
+model SaleItem {
+  id        String   @id @default(cuid())
+  quantity  Int
+  unitPrice Decimal
+  total     Decimal
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+
+  sale      Sale    @relation(fields: [saleId], references: [id])
+  saleId    String
+}
+
+// ==========================================
+// MÓDULO: CLIENTES (CRM)
+// ==========================================
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  cpf       String?  @unique
+  phone     String?
+  email     String?
+  
+  sales     Sale[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ==========================================
+// MÓDULO: FINANCEIRO
+// ==========================================
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  amount      Decimal
+  type        String   // FIXA, VARIAVEL
+  category    String?  // Ex: Aluguel, Agua, Luz, Fornecedor
+  date        DateTime @default(now())
+
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  branchId    String?
+  
+  bills       Bill[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Bill {
+  id          String   @id @default(cuid())
+  description String?
+  amount      Decimal
+  dueDate     DateTime
+  paidDate    DateTime?
+  status      String   @default("PENDENTE") // PENDENTE, PAGO, ATRASADO
+  barcode     String?
+
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  branchId    String?
+
+  expense     Expense? @relation(fields: [expenseId], references: [id])
+  expenseId   String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==========================================
+// MÓDULO: GESTÃO & REUNIÕES
+// ==========================================
+
+model Meeting {
+  id           String   @id @default(cuid())
+  title        String
+  date         DateTime
+  content      String
+  participants String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

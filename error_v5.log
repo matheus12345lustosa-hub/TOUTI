@@ -1,0 +1,71 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Error: Prisma schema validation - (get-dmmf wasm)
+Error code: P1012
+[1;91merror[0m: [1mError validating: You defined the enum `Role`. But the current connector does not support enums.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:137[0m
+[1;94m   | [0m
+[1;94m136 | [0m
+[1;94m137 | [0m[1;91menum Role {[0m
+[1;94m138 | [0m  ADMIN
+[1;94m139 | [0m  MANAGER
+[1;94m140 | [0m  OPERATOR
+[1;94m141 | [0m}
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating: You defined the enum `MovementType`. But the current connector does not support enums.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:143[0m
+[1;94m   | [0m
+[1;94m142 | [0m
+[1;94m143 | [0m[1;91menum MovementType {[0m
+[1;94m144 | [0m  IN
+[1;94m145 | [0m  OUT
+[1;94m146 | [0m  ADJUSTMENT
+[1;94m147 | [0m  SALE
+[1;94m148 | [0m}
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating: You defined the enum `SaleStatus`. But the current connector does not support enums.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:150[0m
+[1;94m   | [0m
+[1;94m149 | [0m
+[1;94m150 | [0m[1;91menum SaleStatus {[0m
+[1;94m151 | [0m  PENDING
+[1;94m152 | [0m  COMPLETED
+[1;94m153 | [0m  CANCELLED
+[1;94m154 | [0m}
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating: You defined the enum `PaymentMethod`. But the current connector does not support enums.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:156[0m
+[1;94m   | [0m
+[1;94m155 | [0m
+[1;94m156 | [0m[1;91menum PaymentMethod {[0m
+[1;94m157 | [0m  CASH
+[1;94m158 | [0m  CREDIT_CARD
+[1;94m159 | [0m  DEBIT_CARD
+[1;94m160 | [0m  PIX
+[1;94m161 | [0m}
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating: You defined the enum `CashStatus`. But the current connector does not support enums.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:163[0m
+[1;94m   | [0m
+[1;94m162 | [0m
+[1;94m163 | [0m[1;91menum CashStatus {[0m
+[1;94m164 | [0m  OPEN
+[1;94m165 | [0m  CLOSED
+[1;94m166 | [0m}
+[1;94m   | [0m
+[1;91merror[0m: [1mError validating: You defined the enum `TransactionType`. But the current connector does not support enums.[0m
+  [1;94m-->[0m  [4mprisma\schema.prisma:168[0m
+[1;94m   | [0m
+[1;94m167 | [0m
+[1;94m168 | [0m[1;91menum TransactionType {[0m
+[1;94m169 | [0m  OPENING
+[1;94m170 | [0m  CLOSING
+[1;94m171 | [0m  BLEED
+[1;94m172 | [0m  REINFORCEMENT
+[1;94m173 | [0m}
+[1;94m   | [0m
+
+Validation Error Count: 6
+[Context: getDmmf]
+
+Prisma CLI Version : 5.19.0
