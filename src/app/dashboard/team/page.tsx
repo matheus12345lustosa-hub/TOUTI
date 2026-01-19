@@ -37,7 +37,8 @@ export default async function TeamPage() {
                 </Link>
             </div>
 
-            <div className="bg-white border border-rose-100 rounded-lg overflow-hidden shadow-sm">
+            {/* Desktop Table */}
+            <div className="hidden md:block bg-white border border-rose-100 rounded-lg overflow-hidden shadow-sm">
                 <Table>
                     <TableHeader className="bg-rose-50/50">
                         <TableRow className="hover:bg-transparent border-rose-100">
@@ -76,6 +77,35 @@ export default async function TeamPage() {
                         ))}
                     </TableBody>
                 </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-4">
+                {users.map((user) => (
+                    <div key={user.id} className="bg-white border border-rose-100 rounded-lg p-4 shadow-sm flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 font-bold">
+                                    {user.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-800">{user.name}</h3>
+                                    <p className="text-xs text-slate-500">{user.email}</p>
+                                </div>
+                            </div>
+                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${user.role === 'GERENTE'
+                                ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                }`}>
+                                {user.role}
+                            </span>
+                        </div>
+                        <div className="text-xs text-slate-400 flex items-center gap-1">
+                            <span>Cadastrado em:</span>
+                            <span>{format(user.createdAt, "dd/MM/yyyy")}</span>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
