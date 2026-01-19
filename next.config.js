@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Deploy trigger: Update for production login fix
 const nextConfig = {
     // Enable standalone build for Vercel/Docker optimizations
     output: 'standalone',
