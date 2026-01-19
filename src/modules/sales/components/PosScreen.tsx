@@ -262,7 +262,8 @@ export const PosScreen = () => {
                 </header>
 
                 {/* Search Bar - Larger Touch Target */}
-                <div className="relative shrink-0 flex gap-2">
+                {/* Search Bar - Larger Touch Target */}
+                <div className="relative shrink-0 flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
                         <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 ${isLoading ? "text-rose-500 animate-spin" : "text-slate-400"}`} />
                         <Input
@@ -276,7 +277,7 @@ export const PosScreen = () => {
                         />
                     </div>
                     {!isCashOpen && (
-                        <Button onClick={() => setShowCashModal(true)} size="lg" className="h-12 text-sm px-6 font-bold uppercase rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200">
+                        <Button onClick={() => setShowCashModal(true)} size="lg" className="h-12 w-full sm:w-auto text-sm px-6 font-bold uppercase rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200">
                             Abrir Caixa
                         </Button>
                     )}

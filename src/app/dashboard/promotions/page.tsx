@@ -218,7 +218,7 @@ export default function PromotionsPage() {
                 </Card>
             )}
 
-            <Card className="bg-white border-rose-100 shadow-sm">
+            <Card className="bg-white border-rose-100 shadow-sm hidden md:block">
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader className="bg-rose-50/50">
@@ -272,6 +272,47 @@ export default function PromotionsPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-4">
+                {promotions.map((promo) => (
+                    <div key={promo.id} className="bg-white border border-rose-100 rounded-lg p-4 shadow-sm flex flex-col gap-3 relative">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h3 className="font-bold text-slate-800 text-sm">{promo.name}</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">{promo.product.name}</p>
+                            </div>
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] h-5 px-1.5">
+                                Ativo
+                            </Badge>
+                        </div>
+
+                        <div className="bg-rose-50/50 rounded p-2 text-xs border border-rose-100">
+                            <div className="font-bold text-rose-700 mb-1">{promo.type === 'WHOLESALE' ? 'ATACADO' : 'LEVE X PAGUE Y'}</div>
+                            <div className="text-slate-600">
+                                {promo.type === 'WHOLESALE'
+                                    ? `Acima de ${promo.minQuantity} un: R$ ${Number(promo.promotionalPrice).toFixed(2)}/un`
+                                    : `Leve ${promo.minQuantity}, Pague ${promo.payQuantity}`
+                                }
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-2 border-t border-rose-50">
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(promo.id)} className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 text-xs">
+                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                Excluir
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+
+                {promotions.length === 0 && (
+                    <div className="text-center py-8 text-slate-400 bg-white rounded-lg border border-dashed border-rose-200">
+                        <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Nenhuma promoção ativa.</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

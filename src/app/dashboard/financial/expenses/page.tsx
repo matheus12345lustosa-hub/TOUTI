@@ -45,7 +45,7 @@ export default async function ExpensesPage() {
                 <AddExpenseDialog />
             </div>
 
-            <Card className="bg-white border-rose-100 shadow-sm">
+            <Card className="bg-white border-rose-100 shadow-sm hidden md:block">
                 <CardHeader>
                     <CardTitle className="text-slate-800">Histórico de Despesas</CardTitle>
                 </CardHeader>
@@ -121,6 +121,62 @@ export default async function ExpensesPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-4">
+                <h3 className="font-bold text-slate-800 px-1">Histórico</h3>
+                {expenses.map((expense) => (
+                    <div key={expense.id} className="bg-white border border-rose-100 rounded-lg p-4 shadow-sm flex flex-col gap-3">
+                        <div className="flex justify-between items-start">
+                            <div className="flex flex-col">
+                                <span className="font-bold text-slate-800 text-sm">{expense.description}</span>
+                                <span className="text-xs text-slate-500">{format(new Date(expense.date), 'dd/MM/yyyy')}</span>
+                            </div>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${expense.type === 'FIXA' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-orange-50 text-orange-600 border border-orange-100'
+                                }`}>
+                                {expense.type}
+                            </span>
+                        </div>
+
+                        <div className="flex justify-between items-end border-t border-rose-50 pt-3">
+                            <div className="flex flex-col gap-1">
+                                {expense.bills.map(bill => (
+                                    <div key={bill.id} className="text-xs flex items-center gap-2">
+                                        <span className="text-slate-500">Vcto: {format(new Date(bill.dueDate), 'dd/MM')}</span>
+                                        {bill.status === 'PAGO' ? (
+                                            <span className="text-emerald-600 font-bold flex items-center gap-0.5 text-[10px]">
+                                                <CheckCircle className="h-3 w-3" /> PAGO
+                                            </span>
+                                        ) : (
+                                            <form action={async () => {
+                                                'use server';
+                                                await markBillPaid(bill.id);
+                                            }}>
+                                                <button className="text-amber-600 underline hover:text-amber-700 font-bold text-[10px] uppercase">Pagar</button>
+                                            </form>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="text-right">
+                                <div className="text-lg font-black text-slate-800">{formatCurrency(Number(expense.amount))}</div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                            <form action={async () => {
+                                'use server';
+                                await deleteExpense(expense.id);
+                            }}>
+                                <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-red-600 hover:bg-red-50 w-full justify-end px-0">
+                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                    Excluir Lançamento
+                                </Button>
+                            </form>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
