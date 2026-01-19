@@ -53,7 +53,7 @@ model Product {
   id          String   @id @default(cuid())
   name        String
   description String?
-  barcode     String   @unique // EAN-13
+  barcode     String?   @unique // EAN-13
   internalCode String? @unique
   price       Decimal
   costPrice   Decimal  @default(0)

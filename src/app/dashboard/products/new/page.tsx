@@ -125,8 +125,8 @@ export default function NewProductPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label htmlFor="barcode" className="text-slate-600">Código de Barras (EAN) <span className="text-red-500">*</span></Label>
-                                        <Input id="barcode" name="barcode" required className="bg-white border-rose-200 text-slate-800 font-mono focus-visible:ring-rose-200" placeholder="789..." />
+                                        <Label htmlFor="barcode" className="text-slate-600">Código de Barras (EAN)</Label>
+                                        <Input id="barcode" name="barcode" className="bg-white border-rose-200 text-slate-800 font-mono focus-visible:ring-rose-200" placeholder="789... (Opcional)" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="unit" className="text-slate-600">Unidade</Label>

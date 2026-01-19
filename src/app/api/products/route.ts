@@ -87,7 +87,16 @@ export async function POST(request: Request) {
         const branchId = cookieStore.get("touti_branchId")?.value;
 
         // Fallback to default branch if no cookie (e.g. initial setup)
+        // Fallback to default branch if no cookie or invalid branch
         let finalBranchId = branchId;
+
+        if (finalBranchId) {
+            const branchExists = await prisma.branch.findUnique({ where: { id: finalBranchId } });
+            if (!branchExists) {
+                finalBranchId = undefined; // Force fallback
+            }
+        }
+
         if (!finalBranchId) {
             const defaultBranch = await prisma.branch.findFirst();
             if (!defaultBranch) {
@@ -111,7 +120,7 @@ export async function POST(request: Request) {
         const product = await prisma.product.create({
             data: {
                 name,
-                barcode,
+                barcode: barcode || null,
                 internalCode: internalCode || `INT-${Date.now()}`,
                 price: safeFloat(price),
                 costPrice: safeFloat(costPrice),
@@ -119,8 +128,8 @@ export async function POST(request: Request) {
                 ncm,
                 cest,
                 unit: unit || "UN",
-                imageUrl,
-                categoryId: finalCategoryId,
+                imageUrl: imageUrl || null,
+                categoryId: finalCategoryId || null,
                 productStocks: {
                     create: {
                         branchId: finalBranchId,
