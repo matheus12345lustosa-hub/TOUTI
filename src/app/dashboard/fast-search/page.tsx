@@ -14,7 +14,7 @@ export default async function FastSearchPage({
     const query = searchParams?.q || "";
 
     // Optimized search for minimal data
-    const products = query ? await prisma.product.findMany({
+    const productsData = query ? await prisma.product.findMany({
         where: {
             OR: [
                 { name: { contains: query, mode: 'insensitive' } },
@@ -26,11 +26,16 @@ export default async function FastSearchPage({
             name: true,
             barcode: true,
             price: true,
-            stock: true,
+            productStocks: { select: { quantity: true } },
             unit: true
         },
         take: 20
     }) : [];
+
+    const products = productsData.map(p => ({
+        ...p,
+        stock: p.productStocks.reduce((sum, item) => sum + item.quantity, 0)
+    }));
 
     return (
         <div className="max-w-4xl mx-auto p-4 space-y-6">

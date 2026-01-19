@@ -24,8 +24,8 @@ async function getDashboardData() {
     const productsCount = await prisma.product.count();
 
     // Low Stock
-    const allProducts = await prisma.product.findMany({ select: { stock: true, minStock: true } });
-    const lowStockCount = allProducts.filter(p => p.stock <= p.minStock).length;
+    const allStocks = await prisma.productStock.findMany({ select: { quantity: true, minStock: true } });
+    const lowStockCount = allStocks.filter(s => s.quantity <= s.minStock).length;
 
     // Revenue
     const aggregator = await prisma.sale.aggregate({ _sum: { total: true } });

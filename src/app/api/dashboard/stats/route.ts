@@ -16,8 +16,9 @@ export async function GET() {
         const productsCount = await prisma.product.count();
 
         // Dynamic Low Stock (reusing logic)
-        const allProducts = await prisma.product.findMany({ select: { stock: true, minStock: true } });
-        const lowStockCount = allProducts.filter(p => p.stock <= p.minStock).length;
+        // Dynamic Low Stock (reusing logic)
+        const allStocks = await prisma.productStock.findMany({ select: { quantity: true, minStock: true } });
+        const lowStockCount = allStocks.filter(s => s.quantity <= s.minStock).length;
 
         // Total Revenue
         const aggregator = await prisma.sale.aggregate({ _sum: { total: true } });

@@ -3,9 +3,15 @@ import prisma from "@/lib/prisma";
 import { EditProductForm } from "./EditProductForm";
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
-    const product = await prisma.product.findUnique({
-        where: { id: params.id }
+    const productRaw = await prisma.product.findUnique({
+        where: { id: params.id },
+        include: { productStocks: true }
     });
+
+    const product = productRaw ? {
+        ...productRaw,
+        stock: productRaw.productStocks.reduce((acc, ps) => acc + ps.quantity, 0)
+    } : null;
 
     if (!product) {
         return <div className="p-8 text-slate-500">Produto não encontrado.</div>;

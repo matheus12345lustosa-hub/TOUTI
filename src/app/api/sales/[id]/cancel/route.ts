@@ -21,16 +21,29 @@ export async function POST(
 
             // 2. Restore Stock
             for (const item of sale.items) {
-                // Increment product stock
-                await tx.product.update({
-                    where: { id: item.productId },
-                    data: { stock: { increment: item.quantity } }
-                });
+                // Increment product stock (Branch Specific)
+                if (sale.branchId) {
+                    await tx.productStock.upsert({
+                        where: {
+                            productId_branchId: {
+                                productId: item.productId,
+                                branchId: sale.branchId
+                            }
+                        },
+                        update: { quantity: { increment: item.quantity } },
+                        create: {
+                            productId: item.productId,
+                            branchId: sale.branchId,
+                            quantity: item.quantity
+                        }
+                    });
+                }
 
                 // Record Stock Movement (Cancellation/Restoration)
                 await tx.stockMovement.create({
                     data: {
                         productId: item.productId,
+                        branchId: sale.branchId, // Link to branch
                         type: "CANCELLATION", // Return/Cancellation
                         quantity: item.quantity, // Positive quantity adding back to stock
                         reason: `Cancelamento da Venda #${saleId.slice(-6)}`

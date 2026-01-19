@@ -13,9 +13,15 @@ import {
 } from "@/shared/ui/table"; // Assuming table component exists or I need to create/use raw HTML
 
 async function getProducts() {
-    return await prisma.product.findMany({
-        orderBy: { name: 'asc' }
+    const products = await prisma.product.findMany({
+        orderBy: { name: 'asc' },
+        include: { productStocks: true }
     });
+    return products.map(p => ({
+        ...p,
+        stock: p.productStocks.reduce((acc, ps) => acc + ps.quantity, 0),
+        minStock: p.productStocks.reduce((acc, ps) => acc + ps.minStock, 0)
+    }));
 }
 
 export const dynamic = 'force-dynamic';
