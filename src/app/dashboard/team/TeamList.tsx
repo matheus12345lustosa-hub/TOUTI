@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Shield, User, Trash2 } from "lucide-react";
+import { Plus, Shield, User, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import {
     Table,
@@ -94,7 +94,12 @@ export function TeamList({ initialUsers }: { initialUsers: any[] }) {
                                 <TableCell className="text-slate-500">
                                     {format(new Date(user.createdAt), "dd/MM/yyyy")}
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right flex justify-end gap-1">
+                                    <Link href={`/dashboard/team/${user.id}`}>
+                                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-blue-600 hover:bg-blue-50">
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)} className="text-slate-400 hover:text-red-600 hover:bg-red-50">
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -131,10 +136,18 @@ export function TeamList({ initialUsers }: { initialUsers: any[] }) {
                                 <span>Cadastro:</span>
                                 <span>{format(new Date(user.createdAt), "dd/MM/yyyy")}</span>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(user.id)} className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 text-xs px-2">
-                                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                Excluir
-                            </Button>
+                            <div className="flex gap-2">
+                                <Link href={`/dashboard/team/${user.id}`}>
+                                    <Button variant="ghost" size="sm" className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 h-8 text-xs px-2">
+                                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                                        Editar
+                                    </Button>
+                                </Link>
+                                <Button variant="ghost" size="sm" onClick={() => handleDelete(user.id)} className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 text-xs px-2">
+                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                    Excluir
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 ))}

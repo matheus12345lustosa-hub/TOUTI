@@ -37,3 +37,37 @@ export async function DELETE(
         return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
     }
 }
+
+import bcrypt from 'bcryptjs';
+
+export async function PUT(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+        const body = await request.json();
+        const { name, email, password, role } = body;
+
+        const updateData: any = {
+            name,
+            email,
+            role
+        };
+
+        if (password && password.trim() !== '') {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            updateData.password = hashedPassword;
+        }
+
+        const user = await prisma.user.update({
+            where: { id },
+            data: updateData
+        });
+
+        return NextResponse.json(user);
+    } catch (error) {
+        console.error("Update User Error:", error);
+        return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
+    }
+}

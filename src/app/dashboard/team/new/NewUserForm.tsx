@@ -15,9 +15,14 @@ import {
 } from "@/shared/ui/select";
 import Link from "next/link";
 
-export default function NewUserForm() {
+interface NewUserFormProps {
+    initialData?: any;
+}
+
+export default function NewUserForm({ initialData }: NewUserFormProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const isEditing = !!initialData;
 
     async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -27,15 +32,18 @@ export default function NewUserForm() {
         const data = Object.fromEntries(formData.entries());
 
         try {
-            const res = await fetch('/api/users', {
-                method: 'POST',
+            const url = isEditing ? `/api/users/${initialData.id}` : '/api/users';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
 
             if (!res.ok) {
                 const error = await res.json();
-                throw new Error(error.error || "Falha ao criar usuário");
+                throw new Error(error.error || "Falha ao salvar");
             }
 
             router.push('/dashboard/team');
@@ -52,22 +60,22 @@ export default function NewUserForm() {
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="name" className="text-slate-600">Nome Completo</Label>
-                    <Input id="name" name="name" required className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200" placeholder="Ex: João da Silva" />
+                    <Input id="name" name="name" defaultValue={initialData?.name} required className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200" placeholder="Ex: João da Silva" />
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="email" className="text-slate-600">Email (Login)</Label>
-                    <Input id="email" name="email" type="email" required className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200" placeholder="usuario@touti.com" />
+                    <Input id="email" name="email" type="email" defaultValue={initialData?.email} required className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200" placeholder="usuario@touti.com" />
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="password" className="text-slate-600">Senha</Label>
-                    <Input id="password" name="password" type="password" required className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200" placeholder="******" />
+                    <Label htmlFor="password" className="text-slate-600">Senha {isEditing && "(Deixe em branco para manter)"}</Label>
+                    <Input id="password" name="password" type="password" required={!isEditing} className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200" placeholder={isEditing ? "(Sem alteração)" : "******"} />
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="role" className="text-slate-600">Nível de Acesso</Label>
-                    <Select name="role" defaultValue="FUNCIONARIO">
+                    <Select name="role" defaultValue={initialData?.role || "FUNCIONARIO"}>
                         <SelectTrigger className="bg-white border-rose-200 text-slate-800 focus:ring-rose-200">
                             <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
@@ -87,7 +95,7 @@ export default function NewUserForm() {
                 </Link>
                 <Button type="submit" className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md hover:shadow-lg transition-all" disabled={isLoading}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Criar Usuário
+                    {isEditing ? "Salvar Alterações" : "Criar Usuário"}
                 </Button>
             </div>
         </form>
