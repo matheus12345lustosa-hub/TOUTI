@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
-import { Label } from "../../../../shared/ui/label";
+import { Label } from "@/shared/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
 
 export function EditProductForm({ product }: { product: any }) {

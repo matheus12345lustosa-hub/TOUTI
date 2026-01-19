@@ -24,7 +24,7 @@ export default async function ProductsPage({
 
     // Cookie & Branch
     const { cookies } = require("next/headers");
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const branchId = cookieStore.get("touti_branchId")?.value;
 
     const products = await prisma.product.findMany({
@@ -105,6 +105,13 @@ export default async function ProductsPage({
                                     // Calculate stock from loaded productStocks
                                     const stockQuantity = product.productStocks.reduce((acc, stock) => acc + stock.quantity, 0);
 
+                                    // Serialize for Client Components (Decimal to Number)
+                                    const serializedProduct = {
+                                        ...product,
+                                        price: Number(product.price),
+                                        costPrice: Number(product.costPrice)
+                                    };
+
                                     return (
                                         <TableRow key={product.id} className="hover:bg-rose-50/30 border-rose-100 h-10 transition-colors">
                                             <TableCell className="font-medium text-slate-700 text-xs py-2">
@@ -113,14 +120,14 @@ export default async function ProductsPage({
                                             </TableCell>
                                             <TableCell className="text-slate-500 text-xs py-2">{product.barcode}</TableCell>
                                             <TableCell className="text-right text-rose-600 font-bold text-xs py-2">
-                                                R$ {Number(product.price).toFixed(2)}
+                                                R$ {serializedProduct.price.toFixed(2)}
                                             </TableCell>
                                             <TableCell className="text-right text-slate-600 text-xs py-2">
                                                 {stockQuantity} {product.unit}
                                             </TableCell>
                                             <TableCell className="text-right py-2">
                                                 <div className="flex justify-end gap-1">
-                                                    <StockAdjustmentDialog product={product} />
+                                                    <StockAdjustmentDialog product={serializedProduct} />
                                                     <Link href={`/dashboard/products/${product.id}`}>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-rose-600 hover:bg-rose-50">
                                                             <Edit className="h-3.5 w-3.5" />

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -7,8 +8,7 @@ export async function GET(request: Request) {
     const query = searchParams.get('q');
 
     // Get Branch from Cookie (for GET)
-    const { cookies } = require("next/headers");
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const branchId = cookieStore.get("touti_branchId")?.value;
 
     // Helper to map stock
@@ -83,8 +83,7 @@ export async function POST(request: Request) {
         }
 
         // Get Branch from Cookie
-        const { cookies } = require("next/headers");
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const branchId = cookieStore.get("touti_branchId")?.value;
 
         // Fallback to default branch if no cookie (e.g. initial setup)

@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 export default async function ExpensesPage() {
     // Cookie & Branch
     const { cookies } = require("next/headers");
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const branchId = cookieStore.get("touti_branchId")?.value;
 
     const expenses = await prisma.expense.findMany({

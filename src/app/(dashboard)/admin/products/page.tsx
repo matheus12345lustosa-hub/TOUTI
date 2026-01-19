@@ -64,7 +64,9 @@ export default async function ProductsPage() {
                                 </td>
                                 <td className="p-4 font-mono text-slate-500">{product.barcode}</td>
                                 <td className="p-4">
-                                    <Button variant="ghost" size="sm" className="text-blue-600">Editar</Button>
+                                    <Link href={`/dashboard/products/${product.id}`}>
+                                        <Button variant="ghost" size="sm" className="text-blue-600">Editar</Button>
+                                    </Link>
                                 </td>
                             </tr>
                         ))}

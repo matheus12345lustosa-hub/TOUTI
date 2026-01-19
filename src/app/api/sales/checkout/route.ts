@@ -21,7 +21,7 @@ export async function POST(request: Request) {
             // Try cookie if body didn't provide it
             if (!finalBranchId) {
                 const { cookies } = require("next/headers");
-                const cookieStore = cookies();
+                const cookieStore = await cookies();
                 finalBranchId = cookieStore.get("touti_branchId")?.value;
             }
 

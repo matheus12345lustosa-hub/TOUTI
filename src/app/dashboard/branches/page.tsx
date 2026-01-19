@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Building2, MapPin, Phone, Search } from "lucide-react";
+import { Plus, Building2, MapPin, Phone, Search, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
@@ -80,6 +80,26 @@ export default function BranchesPage() {
             alert("Erro ao criar filial");
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Tem certeza que deseja excluir esta filial?")) return;
+
+        try {
+            const res = await fetch(`/api/branches/${id}`, {
+                method: "DELETE"
+            });
+
+            if (res.ok) {
+                fetchBranches();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Erro ao excluir filial");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao excluir filial");
         }
     };
 
@@ -169,14 +189,14 @@ export default function BranchesPage() {
                     ) : (
                         <div className="divide-y divide-rose-50">
                             {filteredBranches.map((branch) => (
-                                <div key={branch.id} className="p-4 flex items-center justify-between hover:bg-rose-50/30 transition-colors group">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                                <div key={branch.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-rose-50/30 transition-colors group">
+                                    <div className="flex items-start sm:items-center gap-4">
+                                        <div className="h-10 w-10 shrink-0 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
                                             <Building2 className="h-5 w-5" />
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-slate-800">{branch.name}</h3>
-                                            <div className="flex items-center gap-4 text-sm text-slate-500 mt-0.5">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-slate-500 mt-0.5">
                                                 {branch.phone && (
                                                     <span className="flex items-center gap-1">
                                                         <Phone className="h-3 w-3" /> {branch.phone}
@@ -190,8 +210,19 @@ export default function BranchesPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Badge variant="outline" className="text-slate-400 border-slate-200">ID: {branch.id.substring(0, 8)}...</Badge>
+                                    <div className="flex items-center justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+                                        <Badge variant="outline" className="text-slate-400 border-slate-200 hidden md:inline-flex opacity-50 group-hover:opacity-100 transition-opacity">
+                                            ID: {branch.id.substring(0, 8)}...
+                                        </Badge>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                            onClick={() => handleDelete(branch.id)}
+                                            title="Excluir Filial"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </div>
                                 </div>
                             ))}

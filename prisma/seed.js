@@ -1,76 +1,64 @@
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
-
 const prisma = new PrismaClient();
+const { hash } = require('bcryptjs');
 
 async function main() {
-    const email = 'admin@touti.com';
-    const password = '123456';
+    console.log("Cleaning up database...");
+    // 1. Clean up existing data (Order matters because of foreign keys)
+    await prisma.stockMovement.deleteMany({});
+    await prisma.saleItem.deleteMany({});
+    await prisma.sale.deleteMany({});
+    await prisma.productStock.deleteMany({});
+    await prisma.product.deleteMany({});
+    await prisma.expense.deleteMany({});
+    await prisma.user.deleteMany({});
+    // await prisma.branch.deleteMany({}); // Optional: keep branch or recreate? Let's recreate to be clean.
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Note: Deleting branches might be tricky if there are constraints, but since we deleted children lines above, it should be fine.
+    // However, to keep it simple and safe, I will just upsert the main branch.
 
-    // 1. Create Default Branch (Matriz)
-    const matriz = await prisma.branch.upsert({
-        where: { id: 'matriz-001' }, // Hardcoded ID for simplicity
-        update: {},
+    console.log("Seeding production data...");
+
+    // 2. Create Main Branch
+    const branch = await prisma.branch.upsert({
+        where: { id: 'branch-matriz' },
+        update: { name: 'Matriz - Touti' },
         create: {
-            id: 'matriz-001',
+            id: 'branch-matriz',
             name: 'Matriz - Touti',
-            address: 'Sede Principal',
-            phone: '00 0000-0000'
-        }
+            address: 'Loja Principal',
+        },
     });
 
-    console.log({ branch: matriz });
+    // 3. Create Admin User (Januario)
+    const passwordHash = await hash('123456', 10);
 
-    // 2. Create/Update Admin User linked to Matriz
-    const user = await prisma.user.upsert({
-        where: { email },
+    const admin = await prisma.user.upsert({
+        where: { email: 'januario@touti.com' },
         update: {
-            password: hashedPassword,
             role: 'GERENTE',
-            branchId: matriz.id
+            branchId: branch.id,
+            password: passwordHash,
+            name: 'Januário'
         },
         create: {
-            email,
-            name: 'Administrador',
-            password: hashedPassword,
+            email: 'januario@touti.com',
+            name: 'Januário',
+            password: passwordHash,
             role: 'GERENTE',
-            branchId: matriz.id
+            branchId: branch.id,
         },
     });
 
-    console.log({ user });
-
-    // 3. Initialize ProductStock for all existing products (Migration Helper)
-    // This ensures that if we have products, they get at least one stock entry in Matriz
-    const products = await prisma.product.findMany();
-    for (const p of products) {
-        await prisma.productStock.upsert({
-            where: {
-                productId_branchId: {
-                    productId: p.id,
-                    branchId: matriz.id
-                }
-            },
-            update: {}, // Don't overwrite if exists
-            create: {
-                productId: p.id,
-                branchId: matriz.id,
-                quantity: 100, // Default start stock
-                minStock: 5
-            }
-        });
-    }
-    console.log(`Updated stock for ${products.length} products.`);
+    console.log("Production seed completed!");
+    console.log("Admin: januario@touti.com / 123456");
 }
 
 main()
-    .then(async () => {
-        await prisma.$disconnect();
-    })
-    .catch(async (e) => {
+    .catch((e) => {
         console.error(e);
-        await prisma.$disconnect();
         process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
     });

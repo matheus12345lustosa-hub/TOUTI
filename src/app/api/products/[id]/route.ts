@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { cookies } from "next/headers";
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const body = await request.json();
-        const { id } = params;
+        const { id } = await params;
         const { name, price, costPrice, stock, ncm, cest, unit, imageUrl } = body;
 
         // Note: Direct stock update via PUT is risky. Usually stock should be updated via movements.
@@ -13,8 +14,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
 
 
-        const { cookies } = require("next/headers");
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const branchId = cookieStore.get("touti_branchId")?.value;
 
         // 2. Transaction to Update Product and Stock
@@ -95,13 +95,14 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
         return NextResponse.json(product);
     } catch (error) {
+        console.error("Update error:", error);
         return NextResponse.json({ error: 'Update failed' }, { status: 500 });
     }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = params;
+        const { id } = await params;
         await prisma.product.delete({ where: { id } });
         return NextResponse.json({ success: true });
     } catch (error) {

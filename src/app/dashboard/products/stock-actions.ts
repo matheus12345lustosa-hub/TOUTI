@@ -10,7 +10,7 @@ export async function adjustStock(
     type: 'ADD' | 'REMOVE' | 'SET',
     reason: string
 ) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const branchId = cookieStore.get("touti_branchId")?.value;
 
     if (!branchId) {

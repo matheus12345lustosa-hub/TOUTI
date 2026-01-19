@@ -11,7 +11,7 @@ export async function createExpense(formData: FormData) {
 
     // Branch Context
     const { cookies } = require("next/headers");
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const branchId = cookieStore.get("touti_branchId")?.value;
 
     if (!branchId) {

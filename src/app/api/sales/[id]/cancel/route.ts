@@ -3,10 +3,11 @@ import prisma from '@/lib/prisma';
 
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const saleId = params.id;
+        const { id } = await params;
+        const saleId = id;
 
         // 1. Transaction to ensure atomicity
         const result = await prisma.$transaction(async (tx) => {
