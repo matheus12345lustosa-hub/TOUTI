@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Box, Tag, FileText } from "lucide-react";
 import { Button, Input, Label, Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui";
 
+import { MediaGallery } from "./MediaGallery";
+
 interface Category {
     id: string;
     name: string;
@@ -15,6 +17,7 @@ export default function NewProductPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("geral");
     const [categories, setCategories] = useState<Category[]>([]);
+    const [imageUrl, setImageUrl] = useState("");
 
     useEffect(() => {
         fetch('/api/categories')
@@ -204,8 +207,13 @@ export default function NewProductPage() {
                             </div>
 
                             <div className="space-y-2 pt-4">
-                                <Label htmlFor="imageUrl" className="text-slate-600">URL da Imagem</Label>
-                                <Input id="imageUrl" name="imageUrl" className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200" placeholder="https://..." />
+                                <Label htmlFor="imageUrl" className="text-slate-600">Imagem do Produto</Label>
+                                <Input type="hidden" name="imageUrl" id="imageUrl" value={imageUrl} />
+                                <MediaGallery
+                                    currentUrl={imageUrl}
+                                    onSelect={(url) => setImageUrl(url)}
+                                />
+                                <p className="text-xs text-slate-500">Selecione uma imagem da galeria ou adicione uma nova URL.</p>
                             </div>
                         </CardContent>
                     </Card>

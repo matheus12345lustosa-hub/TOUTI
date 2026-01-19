@@ -302,3 +302,16 @@ model Meeting {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+// ==========================================
+// MÓDULO: MÍDIA (IMAGENS)
+// ==========================================
+
+model Media {
+  id        String   @id @default(cuid())
+  name      String   // Nome amigável (ex: perfume-vip-rose.jpg)
+  url       String   // URL externa ou caminho
+  category  String?  // Ex: Produtos, Banners, etc
+  
+  createdAt DateTime @default(now())
+}
