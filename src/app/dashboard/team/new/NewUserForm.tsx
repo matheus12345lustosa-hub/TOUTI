@@ -59,46 +59,45 @@ export default function NewUserForm({ initialData }: NewUserFormProps) {
         <form onSubmit={onSubmit} className="space-y-6 max-w-lg bg-white p-6 rounded-lg border border-rose-100 shadow-sm">
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="name" className="text-slate-600">Nome Completo</Label>
-                        <Input id="name" name="name" defaultValue={initialData?.name} required className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder="Ex: João da Silva" />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="email" className="text-slate-600">Email (Login)</Label>
-                        <Input id="email" name="email" type="email" defaultValue={initialData?.email} required className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder="usuario@touti.com" />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="password" className="text-slate-600">Senha {isEditing && "(Deixe em branco para manter)"}</Label>
-                        <Input id="password" name="password" type="password" required={!isEditing} className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder={isEditing ? "(Sem alteração)" : "******"} />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="role" className="text-slate-600">Nível de Acesso</Label>
-                        <Select name="role" defaultValue={initialData?.role || "FUNCIONARIO"}>
-                            <SelectTrigger className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus:ring-rose-200">
-                                <SelectValue placeholder="Selecione..." />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white border-rose-100 text-slate-800">
-                                <SelectItem value="FUNCIONARIO" className="hover:bg-rose-50 focus:bg-rose-50 cursor-pointer">Funcionário (PDV)</SelectItem>
-                                <SelectItem value="GERENTE" className="hover:bg-rose-50 focus:bg-rose-50 cursor-pointer">Gerente (Acesso Total)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    <Label htmlFor="name" className="text-slate-600">Nome Completo</Label>
+                    <Input id="name" name="name" defaultValue={initialData?.name} required className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder="Ex: João da Silva" />
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                    <Link href="/dashboard/team" className="w-full">
-                        <Button type="button" variant="outline" className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900">
-                            Cancelar
-                        </Button>
-                    </Link>
-                    <Button type="submit" className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md hover:shadow-lg transition-all" disabled={isLoading}>
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {isEditing ? "Salvar Alterações" : "Criar Usuário"}
+                <div className="space-y-2">
+                    <Label htmlFor="email" className="text-slate-600">Email (Login)</Label>
+                    <Input id="email" name="email" type="email" defaultValue={initialData?.email} required className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder="usuario@touti.com" />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="password" className="text-slate-600">Senha {isEditing && "(Deixe em branco para manter)"}</Label>
+                    <Input id="password" name="password" type="password" required={!isEditing} className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder={isEditing ? "(Sem alteração)" : "******"} />
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="role" className="text-slate-600">Nível de Acesso</Label>
+                    <Select name="role" defaultValue={initialData?.role || "FUNCIONARIO"}>
+                        <SelectTrigger className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus:ring-rose-200">
+                            <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-rose-100 text-slate-800">
+                            <SelectItem value="FUNCIONARIO" className="hover:bg-rose-50 focus:bg-rose-50 cursor-pointer">Funcionário (PDV)</SelectItem>
+                            <SelectItem value="GERENTE" className="hover:bg-rose-50 focus:bg-rose-50 cursor-pointer">Gerente (Acesso Total)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+                <Link href="/dashboard/team" className="w-full">
+                    <Button type="button" variant="outline" className="w-full border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                        Cancelar
                     </Button>
-                </div>
+                </Link>
+                <Button type="submit" className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-md hover:shadow-lg transition-all" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {isEditing ? "Salvar Alterações" : "Criar Usuário"}
+                </Button>
+            </div>
         </form>
     );
 }
