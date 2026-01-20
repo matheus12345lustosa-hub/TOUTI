@@ -36,7 +36,7 @@ function LoginForm() {
                 setError("Email ou senha inválidos.");
             } else {
                 router.refresh();
-                router.push(callbackUrl || "/dashboard");
+                router.push(callbackUrl || "/");
             }
         } catch (err) {
             setError("Ocorreu um erro ao tentar entrar.");

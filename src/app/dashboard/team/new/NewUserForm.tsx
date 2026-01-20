@@ -60,23 +60,23 @@ export default function NewUserForm({ initialData }: NewUserFormProps) {
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="name" className="text-slate-600">Nome Completo</Label>
-                    <Input id="name" name="name" defaultValue={initialData?.name} required className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder="Ex: João da Silva" />
+                    <Input id="name" name="name" defaultValue={initialData?.name} required className="bg-white border-rose-200 text-slate-900 focus-visible:ring-rose-200" placeholder="Ex: João da Silva" />
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="email" className="text-slate-600">Email (Login)</Label>
-                    <Input id="email" name="email" type="email" defaultValue={initialData?.email} required className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder="usuario@touti.com" />
+                    <Input id="email" name="email" type="email" defaultValue={initialData?.email} required className="bg-white border-rose-200 text-slate-900 focus-visible:ring-rose-200" placeholder="usuario@touti.com" />
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="password" className="text-slate-600">Senha {isEditing && "(Deixe em branco para manter)"}</Label>
-                    <Input id="password" name="password" type="password" required={!isEditing} className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus-visible:ring-rose-200" placeholder={isEditing ? "(Sem alteração)" : "******"} />
+                    <Input id="password" name="password" type="password" required={!isEditing} className="bg-white border-rose-200 text-slate-900 focus-visible:ring-rose-200" placeholder={isEditing ? "(Sem alteração)" : "******"} />
                 </div>
 
                 <div className="space-y-2">
                     <Label htmlFor="role" className="text-slate-600">Nível de Acesso</Label>
                     <Select name="role" defaultValue={initialData?.role || "FUNCIONARIO"}>
-                        <SelectTrigger className="bg-white border-rose-200 text-slate-800 dark:text-slate-100 focus:ring-rose-200">
+                        <SelectTrigger className="bg-white border-rose-200 text-slate-900 focus:ring-rose-200">
                             <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-rose-100 text-slate-800">
@@ -84,6 +84,19 @@ export default function NewUserForm({ initialData }: NewUserFormProps) {
                             <SelectItem value="GERENTE" className="hover:bg-rose-50 focus:bg-rose-50 cursor-pointer">Gerente (Acesso Total)</SelectItem>
                         </SelectContent>
                     </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="salesGoal" className="text-slate-600">Meta de Vendas (R$)</Label>
+                    <Input
+                        id="salesGoal"
+                        name="salesGoal"
+                        type="number"
+                        step="0.01"
+                        defaultValue={initialData?.salesGoal}
+                        className="bg-white border-rose-200 text-slate-900 focus-visible:ring-rose-200"
+                        placeholder="0.00"
+                    />
                 </div>
             </div>
 

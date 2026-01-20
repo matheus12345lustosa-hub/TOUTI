@@ -26,104 +26,117 @@ async function getFinancialData() {
 
     const whereBranch = branchId ? { branchId: branchId } : {};
 
-    // Sales Today
-    const salesToday = await prisma.sale.aggregate({
-        _sum: { total: true },
-        where: {
-            createdAt: { gte: today },
-            ...whereBranch
-        }
-    });
+    try {
+        // Sales Today
+        const salesToday = await prisma.sale.aggregate({
+            _sum: { total: true },
+            where: {
+                createdAt: { gte: today },
+                ...whereBranch
+            }
+        });
 
-    // Sales Month
-    const salesMonth = await prisma.sale.aggregate({
-        _sum: { total: true },
-        where: {
-            createdAt: { gte: firstDayOfMonth },
-            ...whereBranch
-        }
-    });
+        // Sales Month
+        const salesMonth = await prisma.sale.aggregate({
+            _sum: { total: true },
+            where: {
+                createdAt: { gte: firstDayOfMonth },
+                ...whereBranch
+            }
+        });
 
-    // Count Sales Today
-    const countToday = await prisma.sale.count({
-        where: {
-            createdAt: { gte: today },
-            ...whereBranch
-        }
-    });
+        // Count Sales Today
+        const countToday = await prisma.sale.count({
+            where: {
+                createdAt: { gte: today },
+                ...whereBranch
+            }
+        });
 
-    // Bills Due
-    const billsDueToday = await prisma.bill.aggregate({
-        _sum: { amount: true },
-        where: {
-            status: 'PENDENTE',
-            dueDate: {
-                gte: today,
-                lte: endOfToday
+        // Bills Due
+        const billsDueToday = await prisma.bill.aggregate({
+            _sum: { amount: true },
+            where: {
+                status: 'PENDENTE',
+                dueDate: {
+                    gte: today,
+                    lte: endOfToday
+                },
+                ...whereBranch
+            }
+        });
+
+        const billsDueWeek = await prisma.bill.aggregate({
+            _sum: { amount: true },
+            where: {
+                status: 'PENDENTE',
+                dueDate: {
+                    gte: startOfWeek,
+                    lte: endOfWeek
+                },
+                ...whereBranch
+            }
+        });
+
+        // Monthly Sales Chart Data (Last 6 Months)
+        const endChartDate = new Date();
+        const startChartDate = subMonths(new Date(), 5); // Last 6 months including current
+
+        const monthlySales = await prisma.sale.findMany({
+            where: {
+                createdAt: { gte: startOfMonth(startChartDate) },
+                ...whereBranch
             },
-            ...whereBranch
-        }
-    });
+            select: {
+                createdAt: true,
+                total: true
+            }
+        });
 
-    const billsDueWeek = await prisma.bill.aggregate({
-        _sum: { amount: true },
-        where: {
-            status: 'PENDENTE',
-            dueDate: {
-                gte: startOfWeek,
-                lte: endOfWeek
-            },
-            ...whereBranch
-        }
-    });
+        // Process data for chart
+        const allMonths = eachMonthOfInterval({
+            start: startOfMonth(startChartDate),
+            end: endChartDate
+        });
 
-    // Monthly Sales Chart Data (Last 6 Months)
-    const endChartDate = new Date();
-    const startChartDate = subMonths(new Date(), 5); // Last 6 months including current
+        const chartData = allMonths.map(month => {
+            const monthStart = startOfMonth(month);
+            const monthEnd = endOfMonth(month);
 
-    const monthlySales = await prisma.sale.findMany({
-        where: {
-            createdAt: { gte: startOfMonth(startChartDate) },
-            ...whereBranch
-        },
-        select: {
-            createdAt: true,
-            total: true
-        }
-    });
+            const salesInMonth = monthlySales.filter(sale =>
+                sale.createdAt >= monthStart && sale.createdAt <= monthEnd
+            );
 
-    // Process data for chart
-    const allMonths = eachMonthOfInterval({
-        start: startOfMonth(startChartDate),
-        end: endChartDate
-    });
+            const total = salesInMonth.reduce((acc, sale) => acc + Number(sale.total), 0);
 
-    const chartData = allMonths.map(month => {
-        const monthStart = startOfMonth(month);
-        const monthEnd = endOfMonth(month);
-
-        const salesInMonth = monthlySales.filter(sale =>
-            sale.createdAt >= monthStart && sale.createdAt <= monthEnd
-        );
-
-        const total = salesInMonth.reduce((acc, sale) => acc + Number(sale.total), 0);
+            return {
+                name: format(month, 'MMM', { locale: ptBR }).toUpperCase(), // JAN, FEV
+                total: total
+            };
+        });
 
         return {
-            name: format(month, 'MMM', { locale: ptBR }).toUpperCase(), // JAN, FEV
-            total: total
+            totalToday: Number(salesToday._sum.total || 0),
+            totalMonth: Number(salesMonth._sum.total || 0),
+            countToday,
+            billsDueToday: Number(billsDueToday._sum.amount || 0),
+            billsDueWeek: Number(billsDueWeek._sum.amount || 0),
+            chartData,
+            isGlobal: !branchId
         };
-    });
-
-
-    return {
-        totalToday: Number(salesToday._sum.total || 0),
-        totalMonth: Number(salesMonth._sum.total || 0),
-        countToday,
-        billsDueToday: Number(billsDueToday._sum.amount || 0),
-        billsDueWeek: Number(billsDueWeek._sum.amount || 0),
-        chartData,
-        isGlobal: !branchId // flag for UI to show "Global" label if needed
-    };
+    } catch (error) {
+        console.error("Dashboard Data Fetch Error:", error);
+        // Return safe defaults
+        return {
+            totalToday: 0,
+            totalMonth: 0,
+            countToday: 0,
+            billsDueToday: 0,
+            billsDueWeek: 0,
+            chartData: [],
+            isGlobal: !branchId
+        };
+    }
 }
 
 export default async function DashboardPage() {

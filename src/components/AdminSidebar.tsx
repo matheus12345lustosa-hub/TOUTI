@@ -13,7 +13,8 @@ import {
     Calendar,
     Users,
     Shield,
-    Building2
+    Building2,
+    ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -82,6 +83,13 @@ export function AdminSidebar({ className, onClose }: SidebarProps) {
                     <p className="text-sm font-medium text-rose-900">{session?.user?.name || "Usuário"}</p>
                     <p className="text-xs text-rose-500 truncate">{session?.user?.email}</p>
                 </div>
+                <Link
+                    href="/"
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar ao Início
+                </Link>
                 <button
                     onClick={() => signOut({ callbackUrl: "/login" })}
                     className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-red-400 hover:bg-red-50 hover:text-red-500 transition-colors"

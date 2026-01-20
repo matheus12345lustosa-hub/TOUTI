@@ -16,6 +16,11 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
         notFound();
     }
 
+    const serializedUser = {
+        ...user,
+        salesGoal: user.salesGoal ? Number(user.salesGoal) : null
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
@@ -32,7 +37,7 @@ export default async function EditUserPage({ params }: { params: Promise<{ id: s
                 </div>
             </div>
 
-            <NewUserForm initialData={user} />
+            <NewUserForm initialData={serializedUser} />
         </div>
     );
 }

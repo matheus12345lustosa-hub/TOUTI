@@ -19,6 +19,7 @@ export default async function TeamPage() {
         ...u,
         createdAt: u.createdAt.toISOString(),
         updatedAt: u.updatedAt.toISOString(),
+        salesGoal: u.salesGoal ? Number(u.salesGoal) : null,
         // role, id, name, email are strings
     }));
 

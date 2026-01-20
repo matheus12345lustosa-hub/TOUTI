@@ -47,12 +47,13 @@ export async function PUT(
     try {
         const { id } = await params;
         const body = await request.json();
-        const { name, email, password, role } = body;
+        const { name, email, password, role, salesGoal } = body;
 
         const updateData: any = {
             name,
             email,
-            role
+            role,
+            salesGoal: salesGoal ? Number(salesGoal) : null
         };
 
         if (password && password.trim() !== '') {

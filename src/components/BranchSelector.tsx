@@ -18,6 +18,11 @@ export function BranchSelector() {
         fetch("/api/branches")
             .then(res => res.json())
             .then(data => {
+                if (!Array.isArray(data)) {
+                    console.error("Invalid branches data:", data);
+                    return;
+                }
+
                 setBranches(data);
 
                 // Recover selection

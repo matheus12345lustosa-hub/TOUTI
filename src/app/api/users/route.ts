@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, email, password, role } = body;
+        const { name, email, password, role, salesGoal } = body;
 
         if (!name || !email || !password || !role) {
             return NextResponse.json({ error: 'Todos os campos são obrigatórios' }, { status: 400 });
@@ -26,7 +26,8 @@ export async function POST(request: Request) {
                 name,
                 email,
                 password: hashedPassword,
-                role
+                role,
+                salesGoal: salesGoal ? Number(salesGoal) : null
             }
         });
 

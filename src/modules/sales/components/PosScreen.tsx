@@ -40,10 +40,26 @@ export const PosScreen = () => {
     // Product List State
     const [products, setProducts] = useState<any[]>([]);
 
+    // Sales Goal State
+    const [goalData, setGoalData] = useState<{ goal: number, remaining: number } | null>(null);
+
     useEffect(() => {
         loadProducts();
         useCartStore.getState().fetchPromotions(); // Load promos
+        fetchGoal();
     }, []);
+
+    const fetchGoal = async () => {
+        try {
+            const res = await fetch('/api/user/goal');
+            if (res.ok) {
+                const data = await res.json();
+                setGoalData(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch goal", err);
+        }
+    };
 
     const loadProducts = async () => {
         const data = await productService.searchProducts("");
@@ -143,6 +159,7 @@ export const PosScreen = () => {
             addSale(total());
             clearCart();
             setIsPaymentOpen(false);
+            fetchGoal(); // Update goal progress
 
             // Send update to Customer Monitor
             const channel = new BroadcastChannel("pdv_channel");
@@ -238,6 +255,23 @@ export const PosScreen = () => {
                             <ArrowLeft className="h-5 w-5" />
                         </Button>
                         <h1 className="text-lg font-bold tracking-tight text-rose-900 hidden sm:block font-serif italic">Touti PDV</h1>
+
+                        {/* Sales Goal Display */}
+                        {goalData && goalData.goal > 0 && (
+                            <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-white border border-rose-100 rounded-full shadow-sm ml-4">
+                                <div className="flex flex-col items-start leading-none">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Meta Mensal</span>
+                                    <span className="text-xs font-bold text-slate-700">R$ {goalData.goal.toFixed(2)}</span>
+                                </div>
+                                <div className="h-4 w-px bg-rose-100 mx-1"></div>
+                                <div className="flex flex-col items-start leading-none">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Falta</span>
+                                    <span className={`text-xs font-bold ${goalData.remaining > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                                        {goalData.remaining > 0 ? `R$ ${goalData.remaining.toFixed(2)}` : 'BATIDA! 🎉'}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-3">
