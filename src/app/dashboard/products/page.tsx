@@ -12,6 +12,7 @@ import {
 } from "@/shared/ui/table";
 import prisma from "@/lib/prisma";
 import { StockAdjustmentDialog } from "./StockAdjustmentDialog";
+import { DeleteProductButton } from "./DeleteProductButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -133,13 +134,7 @@ export default async function ProductsPage({
                                                             <Edit className="h-3.5 w-3.5" />
                                                         </Button>
                                                     </Link>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-red-50"
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                    </Button>
+                                                    <DeleteProductButton id={product.id} productName={product.name} />
                                                 </div>
                                             </TableCell>
                                         </TableRow>
