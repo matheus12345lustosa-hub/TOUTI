@@ -33,7 +33,8 @@ const safeCurrency = (val: any) => {
     }
 };
 
-export default async function ClientDetailsPage({ params }: { params: { id: string } }) {
+export default async function ClientDetailsPage(props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     const client = await prisma.client.findUnique({
         where: { id: params.id },
         include: {

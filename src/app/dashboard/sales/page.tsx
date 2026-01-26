@@ -121,7 +121,12 @@ export default async function SalesPage({
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-right py-3">
-                                                <SaleActions sale={sale} />
+                                                <SaleActions sale={{
+                                                    id: sale.id,
+                                                    status: sale.status,
+                                                    paymentMethod: sale.paymentMethod,
+                                                    items: sale.items.map(() => ({})) // Only length is used
+                                                }} />
                                             </TableCell>
                                         </TableRow>
                                     ))
