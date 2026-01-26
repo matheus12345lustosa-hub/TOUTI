@@ -34,6 +34,7 @@ export const PosScreen = () => {
     // Modals
     const [showCashModal, setShowCashModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
+    const [showBirthdayAlert, setShowBirthdayAlert] = useState(false);
 
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -60,6 +61,30 @@ export const PosScreen = () => {
             console.error("Failed to fetch goal", err);
         }
     };
+
+    // Birthday Check
+    useEffect(() => {
+        if (selectedClient?.birthday) {
+            const today = new Date();
+            const bday = new Date(selectedClient.birthday);
+
+            // Adjust for timezone offset if needed, but simple day/month check is usually enough
+            // Using getUTCDate if string is ISO without timezone, or getDate if local. 
+            // Prisma returns Date object.
+
+            if (today.getDate() === bday.getUTCDate() && today.getMonth() === bday.getUTCMonth()) {
+                // Determine if we should show alert (prevent spam if re-selecting)
+                // For now, valid to show every time current client is birthday person
+
+                // Show native alert or custom UI? User asked for "Pop-up"
+                // Using a state to show a nice dialog would be better, but let's use window.alert for "Pop-up" requirement primarily, 
+                // or simpler: Set a state `showBirthdayAlert`
+                setShowBirthdayAlert(true);
+            }
+        } else {
+            setShowBirthdayAlert(false);
+        }
+    }, [selectedClient]);
 
     const loadProducts = async () => {
         const data = await productService.searchProducts("");
@@ -187,6 +212,29 @@ export const PosScreen = () => {
         <div className="h-screen w-full bg-rose-50 flex flex-col md:flex-row overflow-hidden font-sans text-slate-800 relative text-xs">
 
             {/* Modals */}
+            {showBirthdayAlert && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-xl p-6 shadow-2xl max-w-sm w-full text-center border-4 border-rose-200 transform scale-100">
+                        <div className="mb-4 flex justify-center">
+                            <div className="h-16 w-16 bg-rose-100 rounded-full flex items-center justify-center animate-bounce">
+                                <span className="text-3xl">🎂</span>
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-rose-600 mb-2">Feliz Aniversário!</h2>
+                        <p className="text-slate-600 mb-6">
+                            Hoje é aniversário do cliente <span className="font-bold">{selectedClient?.name}</span>!
+                            <br />
+                            <span className="text-xs text-slate-400">Verifique se há descontos especiais aplicáveis.</span>
+                        </p>
+                        <Button
+                            onClick={() => setShowBirthdayAlert(false)}
+                            className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold"
+                        >
+                            Fechar e Aplicar Desconto (Manual)
+                        </Button>
+                    </div>
+                </div>
+            )}
             {showCashModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
                     <div className="relative">

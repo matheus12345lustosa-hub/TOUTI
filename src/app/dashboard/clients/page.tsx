@@ -12,6 +12,7 @@ import {
 } from "@/shared/ui/table";
 import prisma from "@/lib/prisma";
 import { format } from "date-fns";
+import { DeleteClientButton } from "@/modules/customers/components/DeleteClientButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -99,7 +100,7 @@ export default async function ClientsPage({
                                         </TableCell>
                                         <TableCell className="text-slate-500 text-xs py-2">
                                             <div>{client.phone || "-"}</div>
-                                            <div className="text-[10px]">{client.email}</div>
+                                            <div className="text-[10px]">{client.birthday ? format(client.birthday, "dd/MM") : "-"}</div>
                                         </TableCell>
                                         <TableCell className="text-center text-slate-700 text-xs py-2">
                                             {client._count.sales}
@@ -110,6 +111,7 @@ export default async function ClientsPage({
                                                     Detalhes
                                                 </Button>
                                             </Link>
+                                            <DeleteClientButton clientId={client.id} />
                                         </TableCell>
                                     </TableRow>
                                 ))

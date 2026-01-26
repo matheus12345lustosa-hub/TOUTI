@@ -241,7 +241,7 @@ model Client {
   name      String
   cpf       String?  @unique
   phone     String?
-  email     String?
+  birthday  DateTime?
   
   sales     Sale[]
 

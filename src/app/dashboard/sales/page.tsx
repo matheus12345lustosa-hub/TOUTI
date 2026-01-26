@@ -13,6 +13,8 @@ import {
 } from "@/shared/ui/table";
 import { getSales } from "./actions";
 import { SaleActions } from "./components/SaleActions"; // Client Comp
+import { SearchInput } from "./components/SearchInput";
+import { Pagination } from "@/shared/ui/pagination";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/shared/ui/card";
 
@@ -59,14 +61,7 @@ export default async function SalesPage({
                 <CardContent className="p-4">
                     {/* Filter Toolbar */}
                     <div className="flex gap-2 mb-4">
-                        <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                            <Input
-                                placeholder="Buscar por cliente ou ID..."
-                                className="pl-9 bg-rose-50/30 border-rose-200"
-                                defaultValue={query}
-                            />
-                        </div>
+                        <SearchInput placeholder="Buscar por cliente ou ID..." />
                     </div>
 
                     <div className="rounded-md border border-rose-100 overflow-hidden">
@@ -134,6 +129,12 @@ export default async function SalesPage({
                             </TableBody>
                         </Table>
                     </div>
+
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        baseUrl="/dashboard/sales"
+                    />
                 </CardContent>
             </Card>
         </div>

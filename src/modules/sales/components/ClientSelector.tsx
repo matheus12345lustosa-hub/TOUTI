@@ -22,7 +22,7 @@ export function ClientSelector() {
     const [isCreating, setIsCreating] = useState(false);
 
     // Create Form
-    const [newClient, setNewClient] = useState({ name: "", cpf: "", phone: "", email: "" });
+    const [newClient, setNewClient] = useState({ name: "", cpf: "", phone: "", birthday: "" });
 
     useEffect(() => {
         if (!open) return;
@@ -128,13 +128,16 @@ export function ClientSelector() {
                             onChange={e => setNewClient({ ...newClient, phone: e.target.value })}
                             className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200"
                         />
-                        <Input
-                            placeholder="Email"
-                            value={newClient.email}
-                            onChange={e => setNewClient({ ...newClient, email: e.target.value })}
-                            className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200"
-                        />
-                        <div className="flex gap-2 justify-end pt-4 border-t border-rose-100">
+                        <div className="flex flex-col gap-1">
+                            <span className="text-xs text-slate-500 font-medium ml-1">Data de Aniversário</span>
+                            <Input
+                                type="date"
+                                value={newClient.birthday}
+                                onChange={e => setNewClient({ ...newClient, birthday: e.target.value })}
+                                className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200"
+                            />
+                        </div>
+                        <div className="flex gap-2 justify-end pt-4 border-rose-100">
                             <Button variant="ghost" onClick={() => setIsCreating(false)} className="text-slate-500 hover:text-slate-700">Cancelar</Button>
                             <Button onClick={handleCreate} disabled={!newClient.name} className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-sm">
                                 Salvar Cliente

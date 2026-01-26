@@ -12,8 +12,7 @@ export async function GET(request: Request) {
             OR: [
                 { name: { contains: q, mode: 'insensitive' as any } }, // Cast for Prisma types if needed
                 { cpf: { contains: q } },
-                { phone: { contains: q } },
-                { email: { contains: q } }
+                { phone: { contains: q } }
             ]
         } : {};
 
@@ -38,7 +37,7 @@ export async function POST(request: Request) {
                 name: body.name,
                 cpf: body.cpf,
                 phone: body.phone,
-                email: body.email
+                birthday: body.birthday ? new Date(body.birthday) : null
             }
         });
         return NextResponse.json(client);

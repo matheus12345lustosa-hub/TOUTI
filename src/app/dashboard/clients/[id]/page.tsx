@@ -67,7 +67,7 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
                         {client.name}
                     </h1>
                     <p className="text-sm text-slate-500">
-                        {client.email || "Sem email"} • {client.phone || "Sem telefone"} • CPF: {client.cpf || "-"}
+                        {client.birthday ? format(client.birthday, "dd/MM") : "Sem aniversário"} • {client.phone || "Sem telefone"} • CPF: {client.cpf || "-"}
                     </p>
                 </div>
             </div>

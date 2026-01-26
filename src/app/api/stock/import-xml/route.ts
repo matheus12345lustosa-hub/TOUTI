@@ -33,84 +33,98 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Nenhuma filial selecionada para importação.' }, { status: 400 });
         }
 
-        // Transaction to ensure data integrity
-        await prisma.$transaction(async (tx) => {
-            for (const det of dets) {
-                const prod = det.prod;
+        // Batch Processing Configuration
+        const BATCH_SIZE = 50;
 
-                // Extract Data
-                const barcode = prod.cEAN !== "SEM GTIN" ? prod.cEAN : `INTERNAL-${prod.cProd}`;
-                const name = prod.xProd;
-                const ncm = prod.NCM;
-                const cest = prod.CEST;
-                const cfop = prod.CFOP;
-                const uCom = prod.uCom;
-                const qCom = Number(prod.qCom);
-                const vUnCom = Number(prod.vUnCom);
+        // Helper to process a batch
+        const processBatch = async (batch: any[]) => {
+            await prisma.$transaction(async (tx) => {
+                for (const det of batch) {
+                    const prod = det.prod;
 
-                // Upsert Product
-                let product = await tx.product.findUnique({
-                    where: { barcode: barcode as string }
-                });
+                    // Extract Data
+                    const barcode = prod.cEAN !== "SEM GTIN" ? prod.cEAN : `INTERNAL-${prod.cProd}`;
+                    const name = prod.xProd;
+                    const ncm = prod.NCM;
+                    const cest = prod.CEST;
+                    const cfop = prod.CFOP;
+                    const uCom = prod.uCom;
+                    const qCom = Number(prod.qCom);
+                    const vUnCom = Number(prod.vUnCom);
 
-                if (!product) {
-                    product = await tx.product.create({
-                        data: {
-                            name: name,
-                            barcode: barcode,
-                            price: vUnCom * 1.5,
-                            costPrice: vUnCom,
-                            ncm: ncm,
-                            cest: cest,
-                            cfop: cfop,
-                            unit: uCom,
-                            imageUrl: ""
-                        }
+                    // Upsert Product
+                    let product = await tx.product.findUnique({
+                        where: { barcode: barcode as string }
                     });
-                } else {
-                    await tx.product.update({
-                        where: { id: product.id },
-                        data: {
-                            costPrice: vUnCom,
-                            ncm: ncm,
-                            cest: cest
-                        }
-                    });
-                }
 
-                // Update Stock for Branch
-                await tx.productStock.upsert({
-                    where: {
-                        productId_branchId: {
+                    if (!product) {
+                        product = await tx.product.create({
+                            data: {
+                                name: name,
+                                barcode: barcode,
+                                price: vUnCom * 1.5,
+                                costPrice: vUnCom,
+                                ncm: ncm,
+                                cest: cest,
+                                cfop: cfop,
+                                unit: uCom,
+                                imageUrl: ""
+                            }
+                        });
+                    } else {
+                        await tx.product.update({
+                            where: { id: product.id },
+                            data: {
+                                costPrice: vUnCom,
+                                ncm: ncm,
+                                cest: cest
+                            }
+                        });
+                    }
+
+                    // Update Stock for Branch
+                    await tx.productStock.upsert({
+                        where: {
+                            productId_branchId: {
+                                productId: product.id,
+                                branchId: branchId
+                            }
+                        },
+                        update: {
+                            quantity: { increment: qCom }
+                        },
+                        create: {
                             productId: product.id,
-                            branchId: branchId
+                            branchId: branchId,
+                            quantity: qCom,
+                            minStock: 5 // Default
                         }
-                    },
-                    update: {
-                        quantity: { increment: qCom }
-                    },
-                    create: {
-                        productId: product.id,
-                        branchId: branchId,
-                        quantity: qCom,
-                        minStock: 5 // Default
-                    }
-                });
+                    });
 
-                // Log Movement
-                await tx.stockMovement.create({
-                    data: {
-                        productId: product.id,
-                        branchId: branchId,
-                        type: "PURCHASE",
-                        quantity: qCom,
-                        reason: `Importação XML NFe`
-                    }
-                });
+                    // Log Movement
+                    await tx.stockMovement.create({
+                        data: {
+                            productId: product.id,
+                            branchId: branchId,
+                            type: "PURCHASE",
+                            quantity: qCom,
+                            reason: `Importação XML NFe`
+                        }
+                    });
 
-                processedCount++;
-            }
-        });
+                    processedCount++;
+                }
+            }, {
+                maxWait: 5000, // 5s max wait for tx
+                timeout: 10000 // 10s timeout per batch
+            });
+        };
+
+        // Split into batches
+        for (let i = 0; i < dets.length; i += BATCH_SIZE) {
+            const batch = dets.slice(i, i + BATCH_SIZE);
+            await processBatch(batch);
+        }
 
         return NextResponse.json({ success: true, productsProcessed: processedCount });
 

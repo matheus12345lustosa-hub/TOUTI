@@ -12,7 +12,9 @@ export async function GET() {
         const last30DaysDate = subDays(today, 29);
 
         // 1. Basic Counts
-        const salesCount = await prisma.sale.count();
+        const salesCount = await prisma.sale.count({
+            where: { status: { not: 'CANCELLED' } }
+        });
         const productsCount = await prisma.product.count();
 
         // Dynamic Low Stock (reusing logic)
@@ -21,12 +23,18 @@ export async function GET() {
         const lowStockCount = allStocks.filter(s => s.quantity <= s.minStock).length;
 
         // Total Revenue
-        const aggregator = await prisma.sale.aggregate({ _sum: { total: true } });
+        const aggregator = await prisma.sale.aggregate({
+            _sum: { total: true },
+            where: { status: { not: 'CANCELLED' } }
+        });
         const totalRevenue = aggregator._sum.total || 0;
 
         // 2. Revenue Trend (Last 7 Days)
         const salesLast7Days = await prisma.sale.findMany({
-            where: { createdAt: { gte: last7DaysDate } },
+            where: {
+                createdAt: { gte: last7DaysDate },
+                status: { not: 'CANCELLED' }
+            },
             select: { createdAt: true, total: true }
         });
 
@@ -58,9 +66,12 @@ export async function GET() {
         // 3. Payment Methods Distribution
         // 3. Payment Methods Distribution
         // This is tricky with current schema as Payment is separate, let's Aggregate SalePayment
-        const payments = await (prisma as any).salePayment.groupBy({
+        const payments = await prisma.salePayment.groupBy({
             by: ['method'],
-            _sum: { amount: true }
+            _sum: { amount: true },
+            where: {
+                sale: { status: { not: 'CANCELLED' } }
+            }
         });
 
         const paymentMethods = payments.map((p: any) => ({
