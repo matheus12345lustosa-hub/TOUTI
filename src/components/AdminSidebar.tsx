@@ -15,7 +15,8 @@ import {
     Shield,
     Building2,
     ArrowLeft,
-    ShoppingBag
+    ShoppingBag,
+    Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -75,6 +76,10 @@ export function AdminSidebar({ className, onClose }: SidebarProps) {
                 <LinkItem href="/dashboard/financial" icon={DollarSign} label="Financeiro" />
                 <LinkItem href="/dashboard/branches" icon={Building2} label="Filiais" />
                 <LinkItem href="/dashboard/meetings" icon={Calendar} label="Reuniões" />
+                <div className="pt-2 pb-1">
+                    <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Configurações</p>
+                </div>
+                <LinkItem href="/dashboard/settings/backup" icon={Database} label="Backup" />
             </nav>
 
             <div className="p-4 border-t border-rose-100 space-y-4">
