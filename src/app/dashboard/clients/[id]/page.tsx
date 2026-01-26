@@ -33,25 +33,41 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
     }
 
     // Calculate Stats
-    const totalSpent = client.sales.reduce((acc, sale) => acc + Number(sale.total), 0);
-    const totalSales = client.sales.length;
-    const lastPurchaseDate = client.sales[0]?.createdAt;
+    let totalSpent = 0;
+    let totalSales = 0;
+    let lastPurchaseDate = null;
+    let topProducts: any[] = [];
 
-    // Calculate Top Products
-    const productStats = new Map<string, { name: string; quantity: number; spent: number }>();
+    try {
+        totalSales = client.sales.length;
+        if (totalSales > 0) {
+            lastPurchaseDate = client.sales[0].createdAt;
+            totalSpent = client.sales.reduce((acc, sale) => acc + Number(sale.total), 0);
+        }
 
-    client.sales.forEach(sale => {
-        sale.items.forEach(item => {
-            const current = productStats.get(item.productId) || { name: item.product.name, quantity: 0, spent: 0 };
-            current.quantity += item.quantity;
-            current.spent += Number(item.total);
-            productStats.set(item.productId, current);
+        // Calculate Top Products
+        const productStats = new Map<string, { name: string; quantity: number; spent: number }>();
+
+        client.sales.forEach(sale => {
+            sale.items.forEach(item => {
+                // Safety check: existing product?
+                if (item.product) {
+                    const current = productStats.get(item.productId) || { name: item.product.name, quantity: 0, spent: 0 };
+                    current.quantity += item.quantity;
+                    current.spent += Number(item.total);
+                    productStats.set(item.productId, current);
+                }
+            });
         });
-    });
 
-    const topProducts = Array.from(productStats.values())
-        .sort((a, b) => b.quantity - a.quantity)
-        .slice(0, 5);
+        topProducts = Array.from(productStats.values())
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 5);
+
+    } catch (e) {
+        console.error("Error calculating client stats:", e);
+        // Fallback or just continue with zeros
+    }
 
     return (
         <div className="space-y-6">
