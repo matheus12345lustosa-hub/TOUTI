@@ -16,6 +16,23 @@ import { ptBR } from "date-fns/locale";
 
 export const dynamic = 'force-dynamic';
 
+const safeFormat = (date: any, fmt: string) => {
+    try {
+        if (!date) return "-";
+        return format(new Date(date), fmt, { locale: ptBR });
+    } catch (e) {
+        return "Data Inválida";
+    }
+};
+
+const safeCurrency = (val: any) => {
+    try {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val) || 0);
+    } catch {
+        return "R$ 0,00";
+    }
+};
+
 export default async function ClientDetailsPage({ params }: { params: { id: string } }) {
     const client = await prisma.client.findUnique({
         where: { id: params.id },
@@ -39,18 +56,21 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
     let topProducts: any[] = [];
 
     try {
-        totalSales = client.sales.length;
+        // Safe access to sales array
+        const sales = client.sales || [];
+        totalSales = sales.length;
+
         if (totalSales > 0) {
-            lastPurchaseDate = client.sales[0].createdAt;
-            totalSpent = client.sales.reduce((acc, sale) => acc + Number(sale.total), 0);
+            lastPurchaseDate = sales[0].createdAt;
+            totalSpent = sales.reduce((acc, sale) => acc + Number(sale.total), 0);
         }
 
         // Calculate Top Products
         const productStats = new Map<string, { name: string; quantity: number; spent: number }>();
 
-        client.sales.forEach(sale => {
+        sales.forEach(sale => {
+            if (!sale.items) return;
             sale.items.forEach(item => {
-                // Safety check: existing product?
                 if (item.product) {
                     const current = productStats.get(item.productId) || { name: item.product.name, quantity: 0, spent: 0 };
                     current.quantity += item.quantity;
@@ -66,7 +86,6 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
 
     } catch (e) {
         console.error("Error calculating client stats:", e);
-        // Fallback or just continue with zeros
     }
 
     return (
@@ -83,7 +102,7 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
                         {client.name}
                     </h1>
                     <p className="text-sm text-slate-500">
-                        {client.birthday ? format(client.birthday, "dd/MM") : "Sem aniversário"} • {client.phone || "Sem telefone"} • CPF: {client.cpf || "-"}
+                        {safeFormat(client.birthday, "dd/MM")} • {client.phone || "Sem telefone"} • CPF: {client.cpf || "-"}
                     </p>
                 </div>
             </div>
@@ -97,7 +116,7 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-extrabold text-slate-800">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSpent)}
+                            {safeCurrency(totalSpent)}
                         </div>
                     </CardContent>
                 </Card>
@@ -117,11 +136,11 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
                     </CardHeader>
                     <CardContent>
                         <div className="text-xl font-extrabold text-slate-800">
-                            {lastPurchaseDate ? format(lastPurchaseDate, "dd/MM/yyyy") : "-"}
+                            {safeFormat(lastPurchaseDate, "dd/MM/yyyy")}
                         </div>
                         {lastPurchaseDate && (
                             <p className="text-xs text-slate-500">
-                                {format(lastPurchaseDate, "HH:mm")}
+                                {safeFormat(lastPurchaseDate, "HH:mm")}
                             </p>
                         )}
                     </CardContent>
@@ -149,7 +168,7 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
                                         <TableCell className="text-slate-700 font-medium">{prod.name}</TableCell>
                                         <TableCell className="text-center text-slate-600">{prod.quantity}</TableCell>
                                         <TableCell className="text-right text-emerald-600 font-bold">
-                                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.spent)}
+                                            {safeCurrency(prod.spent)}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -172,20 +191,20 @@ export default async function ClientDetailsPage({ params }: { params: { id: stri
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {client.sales.slice(0, 5).map(sale => (
+                            {(client.sales || []).slice(0, 5).map((sale: any) => (
                                 <div key={sale.id} className="flex justify-between items-center bg-rose-50/50 p-3 rounded-lg border border-rose-100">
                                     <div className="flex flex-col">
                                         <span className="text-slate-700 text-sm font-medium">Compra</span>
                                         <span className="text-slate-500 text-xs">
-                                            {format(sale.createdAt, "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                                            {safeFormat(sale.createdAt, "dd 'de' MMMM, yyyy")}
                                         </span>
                                     </div>
                                     <span className="text-emerald-600 font-bold">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(sale.total))}
+                                        {safeCurrency(sale.total)}
                                     </span>
                                 </div>
                             ))}
-                            {client.sales.length === 0 && (
+                            {(client.sales || []).length === 0 && (
                                 <div className="text-center text-slate-400 text-sm py-4">
                                     Nenhuma compra registrada.
                                 </div>
