@@ -1,39 +1,66 @@
-
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const email = 'admin@abbc.com';
-        const password = '123'; // Simple password as requested (simples)
-        const name = 'Administrador';
-        const role = 'ADMIN';
+        console.log("--- EMERGENCY ADMIN SETUP START ---");
 
-        // Check if user exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
+        const email = "admin@touti.com";
+        const password = "admin";
+
+        // 1. Check if user exists
+        const existing = await prisma.user.findUnique({
+            where: { email }
         });
 
-        if (existingUser) {
-             // Update password just in case
+        if (existing) {
+            // Update password just in case it's wrong
+            const hashedPassword = await bcrypt.hash(password, 10);
             await prisma.user.update({
                 where: { email },
-                data: { password, role }
+                data: { password: hashedPassword, role: 'GERENTE' }
             });
-            return NextResponse.json({ message: 'User admin@abbc.com updated', password });
+            return NextResponse.json({
+                status: "Admin user already exists. Password RESET to 'admin'.",
+                user: { email: existing.email, role: existing.role }
+            });
         }
 
-        const user = await prisma.user.create({
+        // 2. Create if missing
+        console.log("Admin missing. Check/Create Branch...");
+
+        // Ensure a branch exists
+        let branch = await prisma.branch.findFirst();
+        if (!branch) {
+            branch = await prisma.branch.create({
+                data: { name: "Matriz (Auto)", address: "Sede" }
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await prisma.user.create({
             data: {
-                name,
+                name: "Admin Emergencia",
                 email,
-                password,
-                role
-            },
+                password: hashedPassword,
+                role: "GERENTE",
+                branchId: branch.id
+            }
         });
 
-        return NextResponse.json({ message: 'User admin@abbc.com created', password, user });
+        return NextResponse.json({
+            status: "SUCCESS: Admin user created!",
+            credentials: { email: email, password: password }
+        });
+
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({
+            error: "Setup failed",
+            message: error.message,
+            db_url_prefix: process.env.DATABASE_URL?.split(':')[0]
+        }, { status: 500 });
     }
 }
