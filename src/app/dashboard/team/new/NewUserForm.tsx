@@ -76,7 +76,7 @@ export default function NewUserForm({ initialData }: NewUserFormProps) {
                 <div className="space-y-2">
                     <Label htmlFor="role" className="text-slate-600">Nível de Acesso</Label>
                     <Select name="role" defaultValue={initialData?.role || "FUNCIONARIO"}>
-                        <SelectTrigger className="bg-white border-rose-200 text-slate-900 focus:ring-rose-200">
+                        <SelectTrigger className="bg-white border-rose-200 text-slate-900 focus:ring-rose-200 dark:bg-white dark:text-slate-900 dark:border-rose-200">
                             <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-rose-100 text-slate-800">
