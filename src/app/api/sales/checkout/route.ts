@@ -2,16 +2,38 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { items, total, cashRegisterId, payments, userId, clientId, branchId } = body;
+        const { items, total, cashRegisterId, payments, userId: bodyUserId, clientId, branchId } = body;
+
+        const session = await getServerSession(authOptions);
+        let userId = session?.user?.id;
+
+        // Fallback for non-authed environments (if body provides a real ID)
+        if (!userId && bodyUserId && bodyUserId !== "placeholder-user-id") {
+            userId = bodyUserId;
+        }
 
         // 1. Transaction to ensure atomicity
         const sale = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             console.log("Starting Sales Transaction...");
-            // Find a valid user (fallback to first found if specific ID not provided)
-            const user = await tx.user.findFirst();
+
+            // Validate User
+            let user;
+            if (userId) {
+                user = await tx.user.findUnique({ where: { id: userId } });
+            }
+
+            // Last resort fallback (Legacy behavior)
+            if (!user) {
+                console.warn("No authenticated user found for sale. Falling back to first user in DB.");
+                user = await tx.user.findFirst();
+            }
+
             if (!user) throw new Error("Nenhum usuário encontrado no sistema para vincular a venda.");
 
             // Resolve Branch

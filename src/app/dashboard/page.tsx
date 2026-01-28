@@ -32,6 +32,7 @@ async function getFinancialData() {
             _sum: { total: true },
             where: {
                 createdAt: { gte: today },
+                status: { not: 'CANCELLED' },
                 ...whereBranch
             }
         });
@@ -41,6 +42,7 @@ async function getFinancialData() {
             _sum: { total: true },
             where: {
                 createdAt: { gte: firstDayOfMonth },
+                status: { not: 'CANCELLED' },
                 ...whereBranch
             }
         });
@@ -49,6 +51,7 @@ async function getFinancialData() {
         const countToday = await prisma.sale.count({
             where: {
                 createdAt: { gte: today },
+                status: { not: 'CANCELLED' },
                 ...whereBranch
             }
         });
@@ -85,6 +88,7 @@ async function getFinancialData() {
         const monthlySales = await prisma.sale.findMany({
             where: {
                 createdAt: { gte: startOfMonth(startChartDate) },
+                status: { not: 'CANCELLED' },
                 ...whereBranch
             },
             select: {
