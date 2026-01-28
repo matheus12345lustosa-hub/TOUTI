@@ -12,10 +12,19 @@ export async function GET() {
                     { validUntil: { gte: new Date() } },
                     { validUntil: null }
                 ]
+            },
+            include: {
+                product: {
+                    select: {
+                        name: true,
+                        price: true
+                    }
+                }
             }
         });
         return NextResponse.json(promotions);
     } catch (error) {
+        console.error("Promotions API Error:", error);
         return NextResponse.json({ error: "Failed to fetch promotions" }, { status: 500 });
     }
 }

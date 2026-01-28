@@ -1,317 +1,414 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Trash2, Plus, Calendar, Save, Tag, Percent, DollarSign, Layers } from 'lucide-react';
 import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/shared/ui/table";
-import { Badge } from "@/shared/ui/badge";
-import { Tag, Plus, Trash2, Calendar, AlertCircle } from "lucide-react";
+import { format } from 'date-fns';
+
+interface Product {
+    id: string;
+    name: string;
+    price: number;
+}
+
+interface Tier {
+    quantity: number;
+    price: number;
+}
 
 interface Promotion {
     id: string;
     name: string;
-    type: 'BUNDLE' | 'WHOLESALE' | 'BUY_X_PAY_Y';
+    type: string;
     minQuantity: number;
     promotionalPrice?: number;
-    payQuantity?: number;
-    active: boolean;
+    discountPercent?: number;
+    discountAmount?: number;
+    tiers?: Tier[];
+    validUntil?: string;
     product: {
         name: string;
-        price: number;
     };
 }
 
 export default function PromotionsPage() {
+    const router = useRouter();
     const [promotions, setPromotions] = useState<Promotion[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isCreating, setIsCreating] = useState(false);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
 
-    // Form State
-    const [formData, setFormData] = useState({
-        name: "",
-        type: "WHOLESALE",
-        barcode: "",
-        minQuantity: "3",
-        promotionalPrice: "",
-        payQuantity: ""
-    });
-    const [productSearch, setProductSearch] = useState<any>(null); // Found product to link
+    // Form states
+    const [name, setName] = useState('');
+    const [type, setType] = useState('UNITY_PRICE');
+    const [productId, setProductId] = useState('');
+    const [productSearch, setProductSearch] = useState('');
+    const [minQuantity, setMinQuantity] = useState(1);
+    const [promotionalPrice, setPromotionalPrice] = useState('');
+    const [discountAmount, setDiscountAmount] = useState('');
+    const [discountPercent, setDiscountPercent] = useState('');
+    const [validUntil, setValidUntil] = useState('');
+    const [tiers, setTiers] = useState<Tier[]>([{ quantity: 2, price: 0 }]);
+    const [showProductList, setShowProductList] = useState(false);
 
     useEffect(() => {
         fetchPromotions();
+        fetchProducts();
     }, []);
 
     const fetchPromotions = async () => {
         try {
-            const res = await fetch("/api/dashboard/promotions");
-            if (res.ok) {
-                const data = await res.json();
+            const res = await fetch('/api/promotions');
+            if (!res.ok) throw new Error('Failed to fetch');
+            const data = await res.json();
+            if (Array.isArray(data)) {
                 setPromotions(data);
+            } else {
+                setPromotions([]);
             }
         } catch (error) {
-            console.error(error);
+            console.error('Failed to fetch promotions', error);
+            setPromotions([]);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
-    const findProduct = async () => {
-        // This would ideally use the same service as POS or a dedicated API
-        // For MVP we assume user types barcode exactly
-        // We need an endpoint to lookup product by barcode for admin forms
-        // Since we don't have a direct client-side service for this page, we might need to rely on manual entry or existing product list
-        // Let's simplified: User enters Barcode, we try to create. 
-        // BETTER: Let user search product name/barcode.
-        // For now, let's implement a simple "Check" via API if needed, or just let backend handle validation
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch('/api/products');
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setProducts(data);
+            } else {
+                setProducts([]);
+            }
+        } catch (error) {
+            console.error('Failed to fetch products');
+            setProducts([]);
+        }
+    };
 
-        // Quick fix: assume user knows barcode or we add a Product lookup component later.
+    const handleAddTier = () => {
+        setTiers([...tiers, { quantity: tiers.length + 2, price: 0 }]);
+    };
+
+    const handleRemoveTier = (index: number) => {
+        const newTiers = [...tiers];
+        newTiers.splice(index, 1);
+        setTiers(newTiers);
+    };
+
+    const handleTierChange = (index: number, field: keyof Tier, value: number) => {
+        const newTiers = [...tiers];
+        newTiers[index] = { ...newTiers[index], [field]: value };
+        setTiers(newTiers);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.barcode) return alert("Informe o código de barras");
 
-        // 1. Resolve Product ID from Barcode (Client or Server?)
-        // Let's do it simple: Search Product first
-        const productRes = await fetch(`/api/products/search?q=${formData.barcode}`);
-        const products = await productRes.json();
-        const product = products.find((p: any) => p.barcode === formData.barcode);
+        const payload: any = {
+            name,
+            type,
+            productId,
+            minQuantity: Number(minQuantity),
+            validUntil: validUntil ? new Date(validUntil).toISOString() : null,
+        };
 
-        if (!product) return alert("Produto não encontrado com este código de barras.");
+        if (type === 'UNITY_PRICE') {
+            payload.promotionalPrice = Number(promotionalPrice);
+        } else if (type === 'FIXED_AMOUNT') {
+            payload.discountAmount = Number(discountAmount);
+        } else if (type === 'PERCENTAGE') {
+            payload.discountPercent = Number(discountPercent);
+        } else if (type === 'TIERED') {
+            payload.tiers = tiers;
+        }
 
         try {
-            const payload = {
-                name: formData.name,
-                type: formData.type,
-                productId: product.id,
-                minQuantity: Number(formData.minQuantity),
-                promotionalPrice: formData.promotionalPrice ? Number(formData.promotionalPrice) : null,
-                payQuantity: formData.payQuantity ? Number(formData.payQuantity) : null
-            };
-
-            const res = await fetch("/api/dashboard/promotions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+            const res = await fetch('/api/promotions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
             });
 
             if (res.ok) {
-                alert("Promoção criada!");
-                setIsCreating(false);
+                setShowForm(false);
                 fetchPromotions();
-                setFormData({ ...formData, name: "", barcode: "" });
+                resetForm();
             } else {
-                alert("Erro ao criar promoção");
+                alert('Erro ao criar promoção');
             }
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error('Error saving promotion', error);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Tem certeza?")) return;
-        await fetch(`/api/dashboard/promotions?id=${id}`, { method: 'DELETE' });
-        fetchPromotions();
+    const resetForm = () => {
+        setName('');
+        setType('UNITY_PRICE');
+        setProductId('');
+        setProductSearch('');
+        setMinQuantity(1);
+        setPromotionalPrice('');
+        setDiscountAmount('');
+        setDiscountPercent('');
+        setValidUntil('');
+        setTiers([{ quantity: 2, price: 0 }]);
+    };
+
+    const filteredProducts = productSearch.length > 0
+        ? products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
+        : [];
+
+    const selectProduct = (prod: Product) => {
+        setProductId(prod.id);
+        setProductSearch(prod.name);
+        setShowProductList(false);
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                        <Tag className="h-8 w-8 text-rose-500" />
-                        Promoções
-                    </h1>
-                    <p className="text-slate-500">Gerencie regras de desconto automático.</p>
+                    <h1 className="text-xl font-bold text-slate-800">Promoções</h1>
+                    <p className="text-xs text-slate-500">Gerencie regras de descontos e preços especiais.</p>
                 </div>
-                <Button onClick={() => setIsCreating(!isCreating)} className="bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-sm">
-                    {isCreating ? "Cancelar" : "Nova Promoção"}
+                <Button
+                    onClick={() => setShowForm(!showForm)}
+                    size="sm"
+                    className="bg-rose-600 hover:bg-rose-700 text-white h-8 text-xs shadow-sm"
+                >
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    {showForm ? 'Cancelar' : 'Nova Promoção'}
                 </Button>
             </div>
 
-            {isCreating && (
-                <Card className="bg-white border-rose-100 shadow-sm animate-in slide-in-from-top-4">
-                    <CardHeader>
-                        <CardTitle className="text-slate-800">Criar Regra</CardTitle>
-                        <CardDescription className="text-slate-500">Defina como o desconto será aplicado.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Nome da Promoção</label>
-                                    <Input
-                                        placeholder="Ex: Leve 3 Skol pague R$3,50"
-                                        value={formData.name}
-                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        required
-                                        className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200"
+            {showForm && (
+                <div className="bg-white border border-rose-100 p-4 rounded-lg shadow-sm animate-in fade-in slide-in-from-top-2">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-700">Nome da Promoção</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500"
+                                    placeholder="Ex: Promoção VIP"
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-1.5 relative">
+                                <label className="text-xs font-semibold text-slate-700">Produto Alvo (Busca)</label>
+                                <input
+                                    type="text"
+                                    value={productSearch}
+                                    onChange={(e) => {
+                                        setProductSearch(e.target.value);
+                                        setShowProductList(true);
+                                        setProductId('');
+                                    }}
+                                    onFocus={() => setShowProductList(true)}
+                                    className="flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500"
+                                    placeholder="Buscar produto..."
+                                    required={!productId}
+                                />
+                                {showProductList && productSearch && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                        {filteredProducts.length > 0 ? (
+                                            filteredProducts.map((p) => (
+                                                <div
+                                                    key={p.id}
+                                                    onClick={() => selectProduct(p)}
+                                                    className="p-2 hover:bg-rose-50 cursor-pointer border-b border-slate-100 last:border-0 text-sm"
+                                                >
+                                                    <p className="font-medium text-slate-700">{p.name}</p>
+                                                    <p className="text-slate-500 text-xs">R$ {Number(p.price).toFixed(2)}</p>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="p-2 text-slate-500 text-xs">Nenhum produto encontrado</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-700">Tipo</label>
+                                <select
+                                    value={type}
+                                    onChange={(e) => setType(e.target.value)}
+                                    className="flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500"
+                                >
+                                    <option value="UNITY_PRICE">Preço Fixo</option>
+                                    <option value="FIXED_AMOUNT">Desconto R$</option>
+                                    <option value="PERCENTAGE">Desconto %</option>
+                                    <option value="TIERED">Tabela Preço/Qtd</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-700">Validade</label>
+                                <input
+                                    type="datetime-local"
+                                    value={validUntil}
+                                    onChange={(e) => setValidUntil(e.target.value)}
+                                    className="flex h-9 w-full rounded-md border border-slate-200 bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
+                            {type === 'UNITY_PRICE' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500">Preço Unitário Promo (R$)</label>
+                                        <input
+                                            type="number"
+                                            value={promotionalPrice}
+                                            onChange={(e) => setPromotionalPrice(e.target.value)}
+                                            className="w-full text-sm border-slate-200 rounded h-8 px-2"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500">Mínimo Unidades</label>
+                                        <input
+                                            type="number"
+                                            value={minQuantity}
+                                            onChange={(e) => setMinQuantity(Number(e.target.value))}
+                                            className="w-full text-sm border-slate-200 rounded h-8 px-2"
+                                            min="1"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {type === 'FIXED_AMOUNT' && (
+                                <div className="space-y-1">
+                                    <label className="text-xs text-slate-500">Desconto (R$)</label>
+                                    <input
+                                        type="number"
+                                        value={discountAmount}
+                                        onChange={(e) => setDiscountAmount(e.target.value)}
+                                        className="w-full text-sm border-slate-200 rounded h-8 px-2"
+                                        placeholder="0.00"
+                                        step="0.01"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Código de Barras do Produto</label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            placeholder="Escaneie ou digite..."
-                                            value={formData.barcode}
-                                            onChange={e => setFormData({ ...formData, barcode: e.target.value })}
-                                            required
-                                            className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-700">Tipo</label>
-                                    <select
-                                        className="w-full h-10 rounded-md border border-rose-200 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                                        value={formData.type}
-                                        onChange={e => setFormData({ ...formData, type: e.target.value })}
-                                    >
-                                        <option value="WHOLESALE">Atacado (Preço reduzido a partir de X unid)</option>
-                                        <option value="BUNDLE">Leve X Pague Y</option>
-                                    </select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700">Qtd Mínima (Gatilho)</label>
-                                        <Input
-                                            type="number"
-                                            value={formData.minQuantity}
-                                            onChange={e => setFormData({ ...formData, minQuantity: e.target.value })}
-                                            required
-                                            className="bg-white border-rose-200 text-slate-800 focus-visible:ring-rose-200"
-                                        />
-                                    </div>
+                            )}
 
-                                    {formData.type === 'WHOLESALE' ? (
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-rose-600">Novo Preço Unitário</label>
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="0.00"
-                                                value={formData.promotionalPrice}
-                                                onChange={e => setFormData({ ...formData, promotionalPrice: e.target.value })}
-                                                className="bg-rose-50 border-rose-200 text-rose-600 font-bold focus-visible:ring-rose-200"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium text-rose-600">Pague Apenas (Qtd)</label>
-                                            <Input
-                                                type="number"
-                                                placeholder="Ex: 2"
-                                                value={formData.payQuantity}
-                                                onChange={e => setFormData({ ...formData, payQuantity: e.target.value })}
-                                                className="bg-rose-50 border-rose-200 text-rose-600 font-bold focus-visible:ring-rose-200"
-                                            />
-                                        </div>
-                                    )}
+                            {type === 'PERCENTAGE' && (
+                                <div className="space-y-1">
+                                    <label className="text-xs text-slate-500">Desconto (%)</label>
+                                    <input
+                                        type="number"
+                                        value={discountPercent}
+                                        onChange={(e) => setDiscountPercent(e.target.value)}
+                                        className="w-full text-sm border-slate-200 rounded h-8 px-2"
+                                        placeholder="0"
+                                        max="100"
+                                    />
                                 </div>
-                            </div>
-                            <Button type="submit" className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm">
-                                Salvar Promoção
+                            )}
+
+                            {type === 'TIERED' && (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-semibold text-slate-700">Faixas de Preço</span>
+                                        <button type="button" onClick={handleAddTier} className="text-[10px] text-blue-600 hover:underline">+ Adicionar Faixa</button>
+                                    </div>
+                                    {tiers.map((tier, index) => (
+                                        <div key={index} className="flex items-center gap-2">
+                                            <input
+                                                type="number"
+                                                value={tier.quantity}
+                                                onChange={(e) => handleTierChange(index, 'quantity', Number(e.target.value))}
+                                                className="w-20 text-sm border-slate-200 rounded h-7 px-2"
+                                                placeholder="Qtd"
+                                            />
+                                            <span className="text-xs text-slate-400">un. por</span>
+                                            <input
+                                                type="number"
+                                                value={tier.price}
+                                                onChange={(e) => handleTierChange(index, 'price', Number(e.target.value))}
+                                                className="w-24 text-sm border-slate-200 rounded h-7 px-2"
+                                                placeholder="R$ Total"
+                                                step="0.01"
+                                            />
+                                            <button type="button" onClick={() => handleRemoveTier(index)} className="text-rose-500 hover:text-rose-700">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                            <Button type="submit" size="sm" className="bg-rose-600 hover:bg-rose-700 text-white">
+                                <Save className="h-4 w-4 mr-2" /> Salvar
                             </Button>
-                        </form>
-                    </CardContent>
-                </Card>
+                        </div>
+                    </form>
+                </div>
             )}
 
-            <Card className="bg-white border-rose-100 shadow-sm hidden md:block">
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader className="bg-rose-50/50">
-                            <TableRow className="border-rose-100 hover:bg-transparent">
-                                <TableHead className="text-slate-500 font-semibold">Nome</TableHead>
-                                <TableHead className="text-slate-500 font-semibold">Produto</TableHead>
-                                <TableHead className="text-slate-500 font-semibold">Regra</TableHead>
-                                <TableHead className="text-slate-500 font-semibold">Status</TableHead>
-                                <TableHead className="text-right text-slate-500 font-semibold">Ações</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {promotions.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center py-8 text-slate-400">
-                                        Nenhuma promoção ativa no momento.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                promotions.map((promo) => (
-                                    <TableRow key={promo.id} className="border-rose-100 hover:bg-rose-50/30 transition-colors">
-                                        <TableCell className="font-medium text-slate-700">{promo.name}</TableCell>
-                                        <TableCell className="text-slate-600">{promo.product.name}</TableCell>
-                                        <TableCell>
-                                            <div className="flex flex-col">
-                                                <span className="text-xs text-slate-500 font-bold">{promo.type === 'WHOLESALE' ? 'ATACADO' : 'LEVE X PAGUE Y'}</span>
-                                                <span className="text-xs text-slate-500">
-                                                    {promo.type === 'WHOLESALE'
-                                                        ? `Acima de ${promo.minQuantity} un: R$ ${Number(promo.promotionalPrice).toFixed(2)}`
-                                                        : `Leve ${promo.minQuantity}, Pague ${promo.payQuantity}`
-                                                    }
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className={`
-                            bg-emerald-50 text-emerald-600 border-emerald-200
-                        `}>
-                                                Ativo
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => handleDelete(promo.id)} className="text-slate-400 hover:text-red-600 hover:bg-red-50">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-
-            {/* Mobile Cards */}
-            <div className="md:hidden space-y-4">
-                {promotions.map((promo) => (
-                    <div key={promo.id} className="bg-white border border-rose-100 rounded-lg p-4 shadow-sm flex flex-col gap-3 relative">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-sm">{promo.name}</h3>
-                                <p className="text-xs text-slate-500 mt-0.5">{promo.product.name}</p>
-                            </div>
-                            <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] h-5 px-1.5">
-                                Ativo
-                            </Badge>
-                        </div>
-
-                        <div className="bg-rose-50/50 rounded p-2 text-xs border border-rose-100">
-                            <div className="font-bold text-rose-700 mb-1">{promo.type === 'WHOLESALE' ? 'ATACADO' : 'LEVE X PAGUE Y'}</div>
-                            <div className="text-slate-600">
-                                {promo.type === 'WHOLESALE'
-                                    ? `Acima de ${promo.minQuantity} un: R$ ${Number(promo.promotionalPrice).toFixed(2)}/un`
-                                    : `Leve ${promo.minQuantity}, Pague ${promo.payQuantity}`
-                                }
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end pt-2 border-t border-rose-50">
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(promo.id)} className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-8 text-xs">
-                                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                Excluir
-                            </Button>
-                        </div>
-                    </div>
-                ))}
-
-                {promotions.length === 0 && (
-                    <div className="text-center py-8 text-slate-400 bg-white rounded-lg border border-dashed border-rose-200">
-                        <Tag className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">Nenhuma promoção ativa.</p>
-                    </div>
-                )}
+            <div className="bg-white border border-rose-100 rounded-lg shadow-sm overflow-hidden">
+                <table className="w-full text-sm text-left">
+                    <thead className="bg-rose-50/50 text-slate-500 font-semibold text-xs border-b border-rose-100">
+                        <tr>
+                            <th className="p-3">Nome</th>
+                            <th className="p-3">Produto</th>
+                            <th className="p-3">Tipo</th>
+                            <th className="p-3">Detalhes</th>
+                            <th className="p-3">Validade</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-rose-100">
+                        {loading ? (
+                            <tr><td colSpan={5} className="p-4 text-center text-slate-400">Carregando...</td></tr>
+                        ) : promotions.length === 0 ? (
+                            <tr><td colSpan={5} className="p-4 text-center text-slate-400">Nenhuma promoção ativa.</td></tr>
+                        ) : (
+                            promotions.map((promo) => (
+                                <tr key={promo.id} className="hover:bg-rose-50/30 transition-colors">
+                                    <td className="p-3 font-medium text-slate-700">{promo.name}</td>
+                                    <td className="p-3 text-slate-600">{promo.product?.name}</td>
+                                    <td className="p-3">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${promo.type === 'TIERED' ? 'bg-purple-100 text-purple-700' :
+                                                promo.type === 'PERCENTAGE' ? 'bg-green-100 text-green-700' :
+                                                    'bg-blue-100 text-blue-700'
+                                            }`}>
+                                            {promo.type === 'TIERED' ? 'TABELA' :
+                                                promo.type === 'PERCENTAGE' ? '%' :
+                                                    promo.type === 'FIXED_AMOUNT' ? 'R$ OFF' : 'FIXO'}
+                                        </span>
+                                    </td>
+                                    <td className="p-3 text-slate-600 text-xs">
+                                        {promo.type === 'TIERED' ? (
+                                            <span title={JSON.stringify(promo.tiers)}>{(promo.tiers?.length || 0)} faixas</span>
+                                        ) : promo.type === 'PERCENTAGE' ? (
+                                            <span>{promo.discountPercent}% OFF</span>
+                                        ) : promo.type === 'FIXED_AMOUNT' ? (
+                                            <span>-{promo.discountAmount} R$</span>
+                                        ) : (
+                                            <span>R$ {promo.promotionalPrice} (min {promo.minQuantity})</span>
+                                        )}
+                                    </td>
+                                    <td className="p-3 text-slate-500 text-xs">
+                                        {promo.validUntil ? format(new Date(promo.validUntil), 'dd/MM/yyyy') : 'Indeterminado'}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

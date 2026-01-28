@@ -14,10 +14,10 @@ export type CartItem = {
 interface CartState {
     items: CartItem[];
     promotions: PricingPromotion[];
-    selectedClient: { id: string; name: string } | null;
+    selectedClient: { id: string; name: string; birthday?: string | Date | null } | null;
 
     fetchPromotions: () => Promise<void>;
-    setClient: (client: { id: string; name: string } | null) => void;
+    setClient: (client: { id: string; name: string; birthday?: string | Date | null } | null) => void;
     addToCart: (item: CartItem) => void;
     removeFromCart: (itemId: string) => void;
     clearCart: () => void;

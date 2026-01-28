@@ -125,6 +125,8 @@ model Promotion {
   minQuantity      Int
   promotionalPrice Decimal?
   discountPercent  Decimal? // For progressive discount
+  discountAmount   Decimal? // For fixed amount discount
+  tiers            Json?    // For tiered pricing: [{quantity: 3, price: 99.90}, ...]
   payQuantity      Int?
   
   validFrom        DateTime?
