@@ -20,11 +20,10 @@ import { Card, CardContent } from "@/shared/ui/card";
 
 export const dynamic = 'force-dynamic';
 
-export default async function SalesPage({
-    searchParams,
-}: {
-    searchParams: { q?: string; page?: string };
+export default async function SalesPage(props: {
+    searchParams: Promise<{ q?: string; page?: string }>;
 }) {
+    const searchParams = await props.searchParams;
     const query = searchParams?.q || "";
     const currentPage = Number(searchParams?.page) || 1;
 

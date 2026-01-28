@@ -13,37 +13,74 @@ import {
 import prisma from "@/lib/prisma";
 import { StockAdjustmentDialog } from "./StockAdjustmentDialog";
 import { DeleteProductButton } from "./DeleteProductButton";
+import { SearchInput } from "./components/SearchInput";
+import { Pagination } from "@/shared/ui/pagination";
 
 export const dynamic = 'force-dynamic';
 
-export default async function ProductsPage({
-    searchParams,
-}: {
-    searchParams: { q?: string };
+export default async function ProductsPage(props: {
+    searchParams: Promise<{ q?: string; page?: string }>;
 }) {
+    const searchParams = await props.searchParams;
     const query = searchParams?.q || "";
+    const currentPage = Number(searchParams?.page) || 1;
+    const limit = 20;
+    const skip = (currentPage - 1) * limit;
 
     // Cookie & Branch
     const { cookies } = require("next/headers");
     const cookieStore = await cookies();
     const branchId = cookieStore.get("touti_branchId")?.value;
 
-    const products = await prisma.product.findMany({
-        where: {
-            OR: [
-                { name: { contains: query } },
-                { barcode: { contains: query } }
-            ]
-        },
-        include: {
-            category: true,
-            productStocks: {
-                where: branchId ? { branchId } : undefined
+    const where = {
+        AND: [
+            branchId ? { productStocks: { some: { branchId } } } : {}, // Filter if branch is set? Actually existing logic included stocks but didn't filter products by branch explicitly in where. The existing query was:
+            /*
+            where: {
+               OR: [ ... ]
             }
-        },
-        orderBy: { updatedAt: 'desc' },
-        take: 50
-    });
+            and include stock for branch. 
+            If we want to show ALL products but only branch stock, we keep it as is.
+            Let's keep the OR search.
+            */
+            {
+                OR: [
+                    { name: { contains: query, mode: "insensitive" } },
+                    { barcode: { contains: query } }
+                ]
+            }
+        ]
+    };
+
+    const [products, totalCount] = await Promise.all([
+        prisma.product.findMany({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: "insensitive" } },
+                    { barcode: { contains: query } }
+                ]
+            },
+            include: {
+                category: true,
+                productStocks: {
+                    where: branchId ? { branchId } : undefined
+                }
+            },
+            orderBy: { updatedAt: 'desc' },
+            take: limit,
+            skip: skip
+        }),
+        prisma.product.count({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: "insensitive" } },
+                    { barcode: { contains: query } }
+                ]
+            }
+        })
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
 
     return (
 
@@ -72,15 +109,9 @@ export default async function ProductsPage({
 
             <div className="bg-white border border-rose-100 rounded-lg p-3 shadow-sm">
                 {/* Search / Filter Toolbar */}
+
                 <div className="flex gap-2 mb-3">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
-                        <Input
-                            placeholder="Buscar por nome ou código..."
-                            className="pl-8 bg-rose-50/50 border-rose-200 text-slate-800 h-8 text-xs focus-visible:ring-rose-200 placeholder:text-slate-400"
-                            defaultValue={query}
-                        />
-                    </div>
+                    <SearchInput placeholder="Buscar por nome ou código..." />
                 </div>
 
                 <div className="rounded-md border border-rose-100 overflow-hidden">
@@ -145,6 +176,15 @@ export default async function ProductsPage({
                     </Table>
                 </div>
             </div>
+
+            <div className="mt-4">
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    baseUrl="/dashboard/products"
+                />
+            </div>
         </div>
+
     );
 }

@@ -123,3 +123,27 @@ export async function updateSale(saleId: string, data: { paymentMethod?: string 
         return { success: false, message: "Erro ao atualizar venda." };
     }
 }
+
+export async function deleteSale(saleId: string) {
+    try {
+        const sale = await prisma.sale.findUnique({
+            where: { id: saleId }
+        });
+
+        if (!sale) return { success: false, message: "Venda não encontrada." };
+        if (sale.status !== 'CANCELLED') return { success: false, message: "Apenas vendas canceladas podem ser excluídas." };
+
+        // Transaction to delete items then sale
+        await prisma.$transaction(async (tx) => {
+            await tx.saleItem.deleteMany({ where: { saleId } });
+            await tx.salePayment.deleteMany({ where: { saleId } }); // If exists
+            await tx.sale.delete({ where: { id: saleId } });
+        });
+
+        revalidatePath("/dashboard/sales");
+        return { success: true, message: "Venda excluída permanentemente." };
+    } catch (error) {
+        console.error("Delete Sale Error:", error);
+        return { success: false, message: "Erro ao excluir venda." };
+    }
+}

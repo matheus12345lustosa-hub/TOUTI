@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
-import { Save, Ban, Loader2, Edit } from "lucide-react";
+import { Save, Ban, Loader2, Edit, Trash2 } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -18,7 +18,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/shared/ui/select";
-import { cancelSale, updateSale } from "../actions";
+import { cancelSale, updateSale, deleteSale } from "../actions";
 
 interface SaleActionsProps {
     sale: any;
@@ -64,8 +64,40 @@ export function SaleActions({ sale }: SaleActionsProps) {
         }
     }
 
+
+    const handleDelete = async () => {
+        if (!confirm("Tem certeza que deseja EXCLUIR DEFINITIVAMENTE esta venda do histórico?")) return;
+        setIsLoading(true);
+        try {
+            const res = await deleteSale(sale.id);
+            if (!res.success) {
+                alert(res.message);
+            } else {
+                // Success - page will revalidate
+            }
+        } catch (error) {
+            alert("Erro ao excluir.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     if (sale.status === 'CANCELLED') {
-        return <span className="text-xs text-slate-400 italic">Cancelada</span>;
+        return (
+            <div className="flex items-center gap-2 justify-end">
+                <span className="text-xs text-slate-400 italic">Cancelada</span>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-slate-400 hover:text-red-700 hover:bg-red-50"
+                    onClick={handleDelete}
+                    disabled={isLoading}
+                    title="Excluir do Histórico"
+                >
+                    {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </Button>
+            </div>
+        );
     }
 
     return (

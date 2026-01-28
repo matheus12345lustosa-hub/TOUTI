@@ -3,14 +3,19 @@ import prisma from "@/lib/prisma";
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
     try {
+        const params = await props.params;
         const id = params.id;
 
-        // Optional: Check for sales before deleting to prevent errors or enforce logic
-        // But Prisma might throw foreign key constraint if cascade is not set.
-        // Let's try to delete.
+        // 1. Unlink sales (keep history, remove client link)
+        await prisma.sale.updateMany({
+            where: { clientId: id },
+            data: { clientId: null }
+        });
+
+        // 2. Delete Client
         await prisma.client.delete({
             where: { id }
         });
@@ -18,9 +23,6 @@ export async function DELETE(
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("Delete Client Error:", error);
-        if (error.code === 'P2003') { // Prisma Foreign Key Constraint
-            return NextResponse.json({ error: "Não é possível excluir este cliente pois existem vendas vinculadas a ele." }, { status: 400 });
-        }
         return NextResponse.json({ error: "Erro ao excluir cliente." }, { status: 500 });
     }
 }

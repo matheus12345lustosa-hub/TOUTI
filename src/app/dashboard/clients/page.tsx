@@ -16,11 +16,10 @@ import { DeleteClientButton } from "@/modules/customers/components/DeleteClientB
 
 export const dynamic = 'force-dynamic';
 
-export default async function ClientsPage({
-    searchParams,
-}: {
-    searchParams: { q?: string };
+export default async function ClientsPage(props: {
+    searchParams: Promise<{ q?: string }>;
 }) {
+    const searchParams = await props.searchParams;
     const query = searchParams?.q || "";
 
     const clients = await prisma.client.findMany({
