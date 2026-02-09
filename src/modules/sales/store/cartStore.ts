@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { calculateItemTotal, PricingProduct, PricingPromotion, CartItem as PCartItem } from '@/lib/pricing-calc';
+import { calculateCartWithPromotions, PricingPromotion } from '@/lib/pricing-calc';
 
 export type CartItem = {
     id: string;
@@ -35,6 +35,12 @@ export const useCartStore = create<CartState>((set, get) => ({
             if (res.ok) {
                 const data = await res.json();
                 set({ promotions: data });
+                // Re-calculate cart in case promotions loaded after items
+                const state = get();
+                if (state.items.length > 0) {
+                    const recalculatedItems = calculateCartWithPromotions(state.items, data);
+                    set({ items: recalculatedItems });
+                }
             }
         } catch (error) {
             console.error("Failed to load promotions in POS", error);
@@ -43,58 +49,55 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     setClient: (client) => set({ selectedClient: client }),
 
-    addToCart: (item) => set((state) => {
-        const existingItem = state.items.find((i) => i.id === item.id);
-        let newItems;
+    addToCart: (newItemRaw) => set((state) => {
+        // 1. Update the raw items list first (Quantity logic)
+        const existingItemIndex = state.items.findIndex((i) => i.id === newItemRaw.id);
+        let updatedItemsList = [...state.items];
 
-        // Adapters for shared function
-        const toPricingItem = (i: CartItem): PCartItem => ({
-            product: { id: i.id, price: i.price, name: i.name },
-            quantity: i.quantity
-        });
-
-        if (existingItem) {
-            newItems = state.items.map((i) => {
-                if (i.id === item.id) {
-                    const updatedItem = { ...i, quantity: i.quantity + item.quantity };
-                    const res = calculateItemTotal(toPricingItem(updatedItem), state.promotions);
-                    return {
-                        ...updatedItem,
-                        total: res.finalTotal,
-                        promotionApplied: res.appliedPromotion || undefined,
-                        originalPrice: res.appliedPromotion ? updatedItem.price : undefined
-                    };
-                }
-                return i;
-            });
-        } else {
-            const res = calculateItemTotal(toPricingItem(item), state.promotions);
-            const newItem = {
-                ...item,
-                total: res.finalTotal,
-                promotionApplied: res.appliedPromotion || undefined,
-                originalPrice: res.appliedPromotion ? item.price : undefined
+        if (existingItemIndex > -1) {
+            // Update quantity
+            updatedItemsList[existingItemIndex] = {
+                ...updatedItemsList[existingItemIndex],
+                quantity: updatedItemsList[existingItemIndex].quantity + (newItemRaw.quantity || 1)
             };
-            newItems = [...state.items, newItem];
+        } else {
+            // Add new item
+            // Ensure we match the internal structure expected by calculator
+            updatedItemsList.push({
+                ...newItemRaw,
+                product: {
+                    id: newItemRaw.id,
+                    price: newItemRaw.price,
+                    name: newItemRaw.name
+                },
+                price: Number(newItemRaw.price), // Ensure base price is set
+                total: Number(newItemRaw.price) * (newItemRaw.quantity || 1) // Initial total
+            });
         }
 
-        // Broadcast change
+        // 2. Apply Promotions to the WHOLE cart (Mix and Match support)
+        const finalItems = calculateCartWithPromotions(updatedItemsList, state.promotions);
+
+        // 3. Broadcast change
         const channel = new BroadcastChannel('pdv_channel');
-        channel.postMessage({ type: 'UPDATE_CART', items: newItems });
+        channel.postMessage({ type: 'UPDATE_CART', items: finalItems });
         channel.close();
 
-        return { items: newItems };
+        return { items: finalItems };
     }),
 
     removeFromCart: (itemId) => set((state) => {
-        const newItems = state.items.filter((i) => i.id !== itemId);
+        const remainingItems = state.items.filter((i) => i.id !== itemId);
+
+        // Recalculate with remaining items
+        const finalItems = calculateCartWithPromotions(remainingItems, state.promotions);
 
         // Broadcast change
         const channel = new BroadcastChannel('pdv_channel');
-        channel.postMessage({ type: 'UPDATE_CART', items: newItems });
+        channel.postMessage({ type: 'UPDATE_CART', items: finalItems });
         channel.close();
 
-        return { items: newItems };
+        return { items: finalItems };
     }),
 
     clearCart: () => {

@@ -78,7 +78,8 @@ model Product {
 
   saleItems   SaleItem[]
   stockMovements StockMovement[]
-  promotions  Promotion[]
+  promotions       Promotion[] @relation("SingleProductPromotion")
+  promotionsMulti  Promotion[] @relation("MultiProductPromotion")
   productStocks ProductStock[]
 }
 
@@ -133,8 +134,10 @@ model Promotion {
   validUntil       DateTime?
   active           Boolean  @default(true)
 
-  product          Product  @relation(fields: [productId], references: [id])
-  productId        String
+  product          Product? @relation("SingleProductPromotion", fields: [productId], references: [id])
+  productId        String?
+
+  products         Product[] @relation("MultiProductPromotion")
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

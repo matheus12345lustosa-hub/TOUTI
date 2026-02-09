@@ -19,6 +19,11 @@ export async function GET() {
                         name: true,
                         price: true
                     }
+                },
+                products: {
+                    select: {
+                        id: true
+                    }
                 }
             }
         });
