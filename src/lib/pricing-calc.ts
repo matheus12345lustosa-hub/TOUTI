@@ -87,7 +87,7 @@ export function calculateItemTotal(item: CartItem, promotions: PricingPromotion[
  */
 export function calculateCartWithPromotions(items: CartItem[], promotions: PricingPromotion[]): CartItem[] {
     // 1. Reset all items to base state
-    let processingItems = items.map(item => ({
+    let processingItems: CartItem[] = items.map(item => ({
         ...item,
         price: Number(item.product.price),
         total: Number(item.product.price) * item.quantity,

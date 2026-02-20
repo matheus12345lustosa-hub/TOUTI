@@ -34,6 +34,7 @@ export async function getSales({
             include: {
                 client: true,
                 user: true,
+                payments: true, // Adicionado para trazer múltiplos pagamentos
                 items: { include: { product: true } }
             },
             orderBy: { createdAt: 'desc' },
@@ -44,10 +45,20 @@ export async function getSales({
     ]);
 
     return {
-        sales: sales.map(sale => ({
-            ...sale,
-            total: Number(sale.total)
-        })),
+        sales: sales.map(sale => {
+            const originalTotal = sale.items.reduce((acc, item) => {
+                return acc + (Number(item.product.price) * item.quantity);
+            }, 0);
+            const actualTotal = Number(sale.total);
+            const discount = originalTotal > actualTotal ? originalTotal - actualTotal : 0;
+
+            return {
+                ...sale,
+                total: actualTotal,
+                fullValue: originalTotal,
+                discount: discount
+            };
+        }),
         totalPages: Math.ceil(total / limit),
         totalCount: total
     };

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { calculateCartWithPromotions, PricingPromotion } from '@/lib/pricing-calc';
 
+// ...
 export type CartItem = {
     id: string;
     name: string;
@@ -9,6 +10,7 @@ export type CartItem = {
     total: number;
     originalPrice?: number; // Visual aid
     promotionApplied?: string; // Name of promo
+    product?: { id: string; name: string; price: number | string };
 };
 
 interface CartState {
@@ -38,8 +40,8 @@ export const useCartStore = create<CartState>((set, get) => ({
                 // Re-calculate cart in case promotions loaded after items
                 const state = get();
                 if (state.items.length > 0) {
-                    const recalculatedItems = calculateCartWithPromotions(state.items, data);
-                    set({ items: recalculatedItems });
+                    const recalculatedItems = calculateCartWithPromotions(state.items as any, data);
+                    set({ items: recalculatedItems as any });
                 }
             }
         } catch (error) {
@@ -76,7 +78,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         }
 
         // 2. Apply Promotions to the WHOLE cart (Mix and Match support)
-        const finalItems = calculateCartWithPromotions(updatedItemsList, state.promotions);
+        const finalItems = calculateCartWithPromotions(updatedItemsList as any, state.promotions) as any;
 
         // 3. Broadcast change
         const channel = new BroadcastChannel('pdv_channel');
@@ -90,7 +92,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         const remainingItems = state.items.filter((i) => i.id !== itemId);
 
         // Recalculate with remaining items
-        const finalItems = calculateCartWithPromotions(remainingItems, state.promotions);
+        const finalItems = calculateCartWithPromotions(remainingItems as any, state.promotions) as any;
 
         // Broadcast change
         const channel = new BroadcastChannel('pdv_channel');

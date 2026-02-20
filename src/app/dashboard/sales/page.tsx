@@ -23,6 +23,15 @@ export const dynamic = 'force-dynamic';
 export default async function SalesPage(props: {
     searchParams: Promise<{ q?: string; page?: string }>;
 }) {
+    const paymentMethodsMap: Record<string, string> = {
+        'DINHEIRO': 'Dinheiro',
+        'CARTAO_CREDITO': 'Cartão de Crédito',
+        'CARTAO_DEBITO': 'Cartão de Débito',
+        'PIX': 'Pix',
+        'CASH': 'Dinheiro',
+        'CREDIT_CARD': 'Cartão de Crédito',
+        'DEBIT_CARD': 'Cartão de Débito'
+    };
     const searchParams = await props.searchParams;
     const query = searchParams?.q || "";
     const currentPage = Number(searchParams?.page) || 1;
@@ -100,13 +109,38 @@ export default async function SalesPage(props: {
                                             <TableCell className="py-3 text-slate-600">
                                                 {sale.user?.name || "Sistema"}
                                             </TableCell>
-                                            <TableCell className="text-right py-3 font-bold text-emerald-600">
-                                                R$ {sale.total.toFixed(2)}
+                                            <TableCell className="text-right py-3">
+                                                <div className="flex flex-col items-end">
+                                                    {sale.discount > 0 ? (
+                                                        <>
+                                                            <span className="text-xs text-slate-400 line-through">
+                                                                R$ {sale.fullValue.toFixed(2)}
+                                                            </span>
+                                                            <span className="font-bold text-emerald-600">
+                                                                R$ {sale.total.toFixed(2)}
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="font-bold text-emerald-600">
+                                                            R$ {sale.total.toFixed(2)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-center py-3">
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
-                                                    {sale.paymentMethod || "N/A"}
-                                                </span>
+                                                <div className="flex flex-col items-center gap-1">
+                                                    {sale.payments && sale.payments.length > 0 ? (
+                                                        sale.payments.map((p: any) => (
+                                                            <span key={p.id} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                                                                {paymentMethodsMap[p.method] || p.method} {sale.payments.length > 1 ? `- R$ ${Number(p.amount).toFixed(2)}` : ''}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                                                            {sale.paymentMethod ? paymentMethodsMap[sale.paymentMethod] || sale.paymentMethod : "N/A"}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="text-center py-3">
                                                 {sale.status === 'CANCELLED' ? (
@@ -120,12 +154,7 @@ export default async function SalesPage(props: {
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-right py-3">
-                                                <SaleActions sale={{
-                                                    id: sale.id,
-                                                    status: sale.status,
-                                                    paymentMethod: sale.paymentMethod,
-                                                    items: sale.items.map(() => ({})) // Only length is used
-                                                }} />
+                                                <SaleActions sale={sale} />
                                             </TableCell>
                                         </TableRow>
                                     ))

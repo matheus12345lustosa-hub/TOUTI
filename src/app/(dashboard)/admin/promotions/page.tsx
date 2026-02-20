@@ -57,7 +57,7 @@ export default async function PromotionsPage() {
                         </div>
 
                         <h3 className="font-bold text-lg text-slate-800 mb-1">{promo.name}</h3>
-                        <p className="text-sm text-slate-500 mb-4">Produto: <span className="font-medium text-slate-700">{promo.product.name}</span></p>
+                        <p className="text-sm text-slate-500 mb-4">Produto: <span className="font-medium text-slate-700">{promo.product?.name || "N/A"}</span></p>
 
                         <div className="bg-slate-50 p-3 rounded border border-slate-100 space-y-2 text-sm">
                             <div className="flex justify-between">
