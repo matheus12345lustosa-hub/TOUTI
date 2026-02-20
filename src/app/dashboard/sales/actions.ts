@@ -49,7 +49,12 @@ export async function getSales({
             const originalTotal = sale.items.reduce((acc, item) => {
                 return acc + (Number(item.product.price) * item.quantity);
             }, 0);
-            const actualTotal = Number(sale.total);
+
+            // Derive actual total paid from payments to bypass legacy backend miscalculations
+            const actualTotal = sale.payments && sale.payments.length > 0
+                ? sale.payments.reduce((sum, p) => sum + Number(p.amount), 0)
+                : Number(sale.total);
+
             const discount = originalTotal > actualTotal ? originalTotal - actualTotal : 0;
 
             return {

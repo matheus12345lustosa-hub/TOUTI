@@ -154,13 +154,13 @@ export async function POST(request: Request) {
                 }
                 // -----------------------------------------
 
-                calculatedTotal += itemTotal;
+                calculatedTotal += item.total !== undefined ? item.total : itemTotal;
 
                 saleItemsData.push({
                     productId: product.id,
                     quantity: item.quantity,
-                    unitPrice: finalPrice,
-                    total: itemTotal
+                    unitPrice: item.price !== undefined ? item.price : finalPrice,
+                    total: item.total !== undefined ? item.total : itemTotal
                 });
 
                 // Reduce Stock (Branch Specific) & Increment Sales Count
@@ -197,7 +197,7 @@ export async function POST(request: Request) {
             // Create Sale with validated data
             const newSale = await tx.sale.create({
                 data: {
-                    total: calculatedTotal, // Trust backend calculation
+                    total: total !== undefined ? total : calculatedTotal, // Trust frontend total if provided
                     status: "COMPLETED",
                     cashRegisterId: finalCashRegisterId,
                     userId: user.id,
