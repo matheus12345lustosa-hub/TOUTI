@@ -26,7 +26,7 @@ export default function NewPromotionPage() {
 
     useEffect(() => {
         // Fetch products for dropdown
-        fetch('/api/products')
+        fetch('/api/products?limit=all')
             .then(res => res.json())
             .then(data => setProducts(data))
             .catch(err => console.error("Error loading products", err));

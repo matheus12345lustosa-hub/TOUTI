@@ -79,7 +79,7 @@ export default function PromotionsPage() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('/api/products');
+            const res = await fetch('/api/products?limit=all');
             const data = await res.json();
             if (Array.isArray(data)) {
                 setProducts(data);

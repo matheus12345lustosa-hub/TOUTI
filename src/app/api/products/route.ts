@@ -54,9 +54,12 @@ export async function GET(request: Request) {
             return NextResponse.json(products.map(mapStock));
         }
 
+        const limit = searchParams.get('limit');
+        const take = limit === 'all' ? undefined : (limit ? parseInt(limit, 10) : 50);
+
         // Default list - Smart Sorting (Most Sold First)
         const products = await prisma.product.findMany({
-            take: 50,
+            take,
             orderBy: { salesCount: 'desc' },
             include: stockInclude
         });
