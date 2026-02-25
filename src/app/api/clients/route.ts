@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         const client = await prisma.client.create({
             data: {
                 name: body.name,
-                cpf: body.cpf,
+                cpf: body.cpf && body.cpf.trim() !== "" ? body.cpf.trim() : null,
                 phone: body.phone,
                 birthday: body.birthday ? new Date(body.birthday) : null
             }
